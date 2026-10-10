@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { ConversationView } from "./features/conversation/ConversationView";
 import { useConversation } from "./features/conversation/useConversation";
 import { FeedbackView } from "./features/feedback/FeedbackView";
+import { useMicrophone } from "./features/microphone/useMicrophone";
 import { ReviewView } from "./features/feedback/ReviewView";
 import { OrderPanel } from "./features/scenes/OrderPanel";
 
@@ -62,10 +63,15 @@ function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
 }
 
 function Scene({ nickname, onLogout }: { nickname: string; onLogout: () => void }) {
-  const { state, status, say, fix, end, restart } = useConversation(nickname);
+  const { state, status, npcSpeaking, muted, say, sayAudio, fix, end, toggleMute, restart } =
+    useConversation(nickname);
   const [tab, setTab] = useState<"talk" | "review">("talk");
   const { scene, result } = state;
   const ended = result !== null;
+  const mic = useMicrophone({
+    onUtterance: sayAudio,
+    hold: npcSpeaking || state.waitingForNpc || ended,
+  });
 
   return (
     <div className="app">
@@ -83,6 +89,9 @@ function Scene({ nickname, onLogout }: { nickname: string; onLogout: () => void 
           <span className={`status status-${status}`}>
             {status === "open" ? "연결됨" : status === "connecting" ? "연결 중" : "연결 끊김"}
           </span>
+          <button className="link" onClick={toggleMute} aria-pressed={muted}>
+            {muted ? "음성 켜기" : "음성 끄기"}
+          </button>
           <span className="muted">{nickname}</span>
           <button className="link" onClick={onLogout}>
             바꾸기
@@ -131,9 +140,17 @@ function Scene({ nickname, onLogout }: { nickname: string; onLogout: () => void 
               canFix={!ended}
               onSay={say}
               onFix={fix}
+              mic={{ status: mic.status, error: mic.error, start: mic.start, stop: mic.stop }}
             />
             <div className="side">
               {scene && <OrderPanel scene={scene} phase={state.phase} slots={state.slots} />}
+              {state.timing && (
+                <p className="timing" title="말이 끝난 뒤 NPC 음성이 준비되기까지">
+                  응답 {(state.timing.total_ms / 1000).toFixed(1)}초 · 인식{" "}
+                  {(state.timing.stt_ms / 1000).toFixed(1)} · 대사 {(state.timing.npc_ms / 1000).toFixed(1)} ·
+                  음성 {(state.timing.tts_ms / 1000).toFixed(1)}
+                </p>
+              )}
               {!ended && scene && (
                 <button className="end-btn" onClick={end}>
                   대화 끝내기

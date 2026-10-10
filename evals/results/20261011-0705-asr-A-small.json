@@ -1,0 +1,276 @@
+{
+  "label": "A-small",
+  "created_at": "2026-10-11T07:05:47",
+  "model_id": "faster-whisper:small.en:cuda:int8_float16",
+  "hotwords": null,
+  "manifest": "evals\\audio\\synthetic\\manifest.jsonl",
+  "synthetic": true,
+  "overall": {
+    "n": 240,
+    "wer": 0.0539,
+    "slot_accuracy": 0.8917,
+    "latency_ms_p50": 242,
+    "latency_ms_p95": 349,
+    "rtf_mean": 0.129
+  },
+  "by_condition": {
+    "babble5db": {
+      "n": 120,
+      "wer": 0.0856,
+      "slot_accuracy": 0.8583,
+      "latency_ms_p50": 237,
+      "latency_ms_p95": 350,
+      "rtf_mean": 0.131
+    },
+    "clean": {
+      "n": 120,
+      "wer": 0.0221,
+      "slot_accuracy": 0.925,
+      "latency_ms_p50": 242,
+      "latency_ms_p95": 345,
+      "rtf_mean": 0.127
+    }
+  },
+  "errors": [
+    {
+      "file": "00-bf_emma-clean.wav",
+      "text": "Hi, can I get a large hot latte, please?",
+      "hypothesis": "Hi can I get a large heart latte please?",
+      "slots_ok": false
+    },
+    {
+      "file": "00-bm_george-babble5db.wav",
+      "text": "Hi, can I get a large hot latte, please?",
+      "hypothesis": "How can I get a large heart loss, please?",
+      "slots_ok": false
+    },
+    {
+      "file": "01-bm_george-babble5db.wav",
+      "text": "I want a small iced Americano.",
+      "hypothesis": "I was a small-sized Americana once.",
+      "slots_ok": false
+    },
+    {
+      "file": "02-bm_george-babble5db.wav",
+      "text": "Could I have a medium cold brew?",
+      "hypothesis": "Could I have a medium cold breath?",
+      "slots_ok": false
+    },
+    {
+      "file": "03-bf_emma-clean.wav",
+      "text": "One small hot chocolate, please.",
+      "hypothesis": "One small heart chocolate please.",
+      "slots_ok": false
+    },
+    {
+      "file": "03-bf_emma-babble5db.wav",
+      "text": "One small hot chocolate, please.",
+      "hypothesis": "One small heart chocolate please.",
+      "slots_ok": false
+    },
+    {
+      "file": "03-bm_george-clean.wav",
+      "text": "One small hot chocolate, please.",
+      "hypothesis": "One small heart chocolate, please.",
+      "slots_ok": false
+    },
+    {
+      "file": "04-bm_george-babble5db.wav",
+      "text": "Can I get a latte with oat milk?",
+      "hypothesis": "Can I get a latte with oatmeal?",
+      "slots_ok": false
+    },
+    {
+      "file": "05-af_heart-babble5db.wav",
+      "text": "I'd like a large iced latte with almond milk.",
+      "hypothesis": "I like a large iced latte with almond milk.",
+      "slots_ok": true
+    },
+    {
+      "file": "06-bm_george-babble5db.wav",
+      "text": "Make it a medium, please.",
+      "hypothesis": "May it be a medium, please.",
+      "slots_ok": true
+    },
+    {
+      "file": "07-af_heart-babble5db.wav",
+      "text": "Actually, can I change that to iced?",
+      "hypothesis": "Actually, can I change that to ice?",
+      "slots_ok": true
+    },
+    {
+      "file": "07-am_michael-babble5db.wav",
+      "text": "Actually, can I change that to iced?",
+      "hypothesis": "Actually, can I change that to ice?",
+      "slots_ok": true
+    },
+    {
+      "file": "07-bm_george-babble5db.wav",
+      "text": "Actually, can I change that to iced?",
+      "hypothesis": "Actually, can I change that to ice?",
+      "slots_ok": true
+    },
+    {
+      "file": "08-bm_george-babble5db.wav",
+      "text": "Can I add an extra shot?",
+      "hypothesis": "Can I have an extra shot?",
+      "slots_ok": true
+    },
+    {
+      "file": "10-bm_george-babble5db.wav",
+      "text": "No milk, thanks.",
+      "hypothesis": "No thanks.",
+      "slots_ok": false
+    },
+    {
+      "file": "11-am_michael-babble5db.wav",
+      "text": "Do you have pumpkin spice latte?",
+      "hypothesis": "and you have pumpkin spice latte.",
+      "slots_ok": true
+    },
+    {
+      "file": "11-bm_george-babble5db.wav",
+      "text": "Do you have pumpkin spice latte?",
+      "hypothesis": "You have pumpkin spice latte",
+      "slots_ok": true
+    },
+    {
+      "file": "12-af_heart-clean.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "than a medium-hot latte, please.",
+      "slots_ok": true
+    },
+    {
+      "file": "12-af_heart-babble5db.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "When a medium hot latte sleeps...",
+      "slots_ok": true
+    },
+    {
+      "file": "12-am_michael-clean.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "than a medium-hot latte, please.",
+      "slots_ok": true
+    },
+    {
+      "file": "12-am_michael-babble5db.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "In a medium hot latte, please.",
+      "slots_ok": true
+    },
+    {
+      "file": "12-bf_emma-clean.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "than a medium-heart latte please.",
+      "slots_ok": false
+    },
+    {
+      "file": "12-bm_george-babble5db.wav",
+      "text": "Then a medium hot latte, please.",
+      "hypothesis": "Then I'm medium-hot latte, please.",
+      "slots_ok": true
+    },
+    {
+      "file": "15-bf_emma-clean.wav",
+      "text": "Small, please.",
+      "hypothesis": "Small pleaser",
+      "slots_ok": true
+    },
+    {
+      "file": "15-bf_emma-babble5db.wav",
+      "text": "Small, please.",
+      "hypothesis": "Small pleaser.",
+      "slots_ok": true
+    },
+    {
+      "file": "15-bm_george-clean.wav",
+      "text": "Small, please.",
+      "hypothesis": "Smol please.",
+      "slots_ok": false
+    },
+    {
+      "file": "16-bf_emma-clean.wav",
+      "text": "Hot, please.",
+      "hypothesis": "Heart pleasers",
+      "slots_ok": false
+    },
+    {
+      "file": "16-bf_emma-babble5db.wav",
+      "text": "Hot, please.",
+      "hypothesis": "Heart pleaser.",
+      "slots_ok": false
+    },
+    {
+      "file": "16-bm_george-clean.wav",
+      "text": "Hot, please.",
+      "hypothesis": "Heart, please.",
+      "slots_ok": false
+    },
+    {
+      "file": "16-bm_george-babble5db.wav",
+      "text": "Hot, please.",
+      "hypothesis": "Haunt, please.",
+      "slots_ok": false
+    },
+    {
+      "file": "17-bf_emma-babble5db.wav",
+      "text": "Yes, that's all.",
+      "hypothesis": "Yes, that's all, ladies.",
+      "slots_ok": true
+    },
+    {
+      "file": "18-af_heart-babble5db.wav",
+      "text": "No, that's it.",
+      "hypothesis": "No, that's not.",
+      "slots_ok": true
+    },
+    {
+      "file": "21-bm_george-babble5db.wav",
+      "text": "I'll have a big iced Americano.",
+      "hypothesis": "I'll have as good Iced Americano.",
+      "slots_ok": false
+    },
+    {
+      "file": "22-am_michael-babble5db.wav",
+      "text": "Could I get the hot cocoa in small?",
+      "hypothesis": "Could I get the hot coke going small?",
+      "slots_ok": false
+    },
+    {
+      "file": "22-bf_emma-clean.wav",
+      "text": "Could I get the hot cocoa in small?",
+      "hypothesis": "Could I get the heart cocoa in small?",
+      "slots_ok": false
+    },
+    {
+      "file": "22-bf_emma-babble5db.wav",
+      "text": "Could I get the hot cocoa in small?",
+      "hypothesis": "Could I get the heart cocoa in small?",
+      "slots_ok": false
+    },
+    {
+      "file": "22-bm_george-clean.wav",
+      "text": "Could I get the hot cocoa in small?",
+      "hypothesis": "Could I get the heart cocoa in small?",
+      "slots_ok": false
+    },
+    {
+      "file": "22-bm_george-babble5db.wav",
+      "text": "Could I get the hot cocoa in small?",
+      "hypothesis": "Could I get the hard cocoa and cereal?",
+      "slots_ok": false
+    },
+    {
+      "file": "25-af_heart-babble5db.wav",
+      "text": "A medium iced latte with an extra shot, please.",
+      "hypothesis": "A medium iced latte with an extra shot really...",
+      "slots_ok": true
+    },
+    {
+      "file": "25-bf_emma-babble5db.wav",
+      "text": "A medium iced latte with an extra shot, please.",
+      "hypothesis": "A medium iced latte with an extra-sharp, please.",
+      "slots_ok": false
+    }
+  ]
+}

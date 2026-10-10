@@ -12,4 +12,5 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m 'not model'"
+markers = ["model: needs downloaded speech models and (by default) a GPU"]

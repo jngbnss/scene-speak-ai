@@ -1,0 +1,32 @@
+# EXP-ASR-001 recording script: café orders with menu words, sizes and options.
+# One sentence per line. Lines starting with # are ignored.
+Hi, can I get a large hot latte, please?
+I want a small iced Americano.
+Could I have a medium cold brew?
+One small hot chocolate, please.
+Can I get a latte with oat milk?
+I'd like a large iced latte with almond milk.
+Make it a medium, please.
+Actually, can I change that to iced?
+Can I add an extra shot?
+Two extra shots, please.
+No milk, thanks.
+Do you have pumpkin spice latte?
+Then a medium hot latte, please.
+Can I get a black coffee?
+A large cold brew with whole milk, please.
+Small, please.
+Hot, please.
+Yes, that's all.
+No, that's it.
+Never mind, cancel my order.
+Can I get a regular latte with oat milk?
+I'll have a big iced Americano.
+Could I get the hot cocoa in small?
+Is the cold brew iced only?
+Can I have that with almond milk instead?
+A medium iced latte with an extra shot, please.
+Sorry, I meant large.
+That's everything, thank you.
+Can I get a cappuccino?
+A small iced latte with oat milk and an extra shot, please.

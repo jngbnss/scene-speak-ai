@@ -19,6 +19,15 @@ class TextUtterance(BaseModel):
     text: str = Field(min_length=1, max_length=500)
 
 
+class AudioUtterance(BaseModel):
+    """One utterance cut by the browser VAD: 16-bit little-endian mono PCM, base64."""
+
+    type: Literal["audio_utterance"]
+    seq: int
+    sample_rate: int = Field(ge=8000, le=48000)
+    pcm16_base64: str = Field(min_length=1)
+
+
 class TranscriptFix(BaseModel):
     type: Literal["transcript_fix"]
     seq: int
@@ -31,7 +40,8 @@ class SessionEnd(BaseModel):
 
 
 ClientMessage = Annotated[
-    SessionStart | TextUtterance | TranscriptFix | SessionEnd, Field(discriminator="type")
+    SessionStart | TextUtterance | AudioUtterance | TranscriptFix | SessionEnd,
+    Field(discriminator="type"),
 ]
 client_message_adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
 
@@ -85,6 +95,32 @@ class NpcReplyOut(BaseModel):
     action: str
     source: str
     latency_ms: int = 0
+
+
+class NpcAudio(BaseModel):
+    type: Literal["npc_audio"] = "npc_audio"
+    seq: int
+    format: Literal["wav"] = "wav"
+    sample_rate: int
+    data_base64: str
+
+
+class NpcAudioFailed(BaseModel):
+    type: Literal["npc_audio_failed"] = "npc_audio_failed"
+    seq: int
+    reason: str
+
+
+class TurnTiming(BaseModel):
+    """Per-turn latency in ms. stt_ms is 0 for typed input."""
+
+    type: Literal["turn_timing"] = "turn_timing"
+    seq: int
+    stt_ms: int
+    npc_ms: int  # Director + LLM (+ retry)
+    llm_ms: int
+    tts_ms: int
+    total_ms: int
 
 
 class TaskResult(BaseModel):

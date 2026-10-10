@@ -28,6 +28,22 @@ class Settings(BaseSettings):
     ollama_keep_alive: str = "30m"
     llm_timeout_s: float = 60.0
 
+    whisper_model: str = "small.en"
+    whisper_device: str = "cuda"  # cuda | cpu
+    whisper_compute_type: str = "int8_float16"  # use int8 on cpu
+    whisper_beam_size: int = 1
+    # hotwords | prompt | none (EXP-ASR-001)
+    whisper_context_mode: str = "prompt"
+
+    kokoro_model_path: Path = REPO_ROOT / "models" / "kokoro" / "kokoro-v1.0.onnx"
+    kokoro_voices_path: Path = REPO_ROOT / "models" / "kokoro" / "voices-v1.0.bin"
+    kokoro_device: str = "cuda"  # cuda | cpu
+
+    # User recordings are kept for "listen again" and deleted after this many days.
+    audio_dir: Path = REPO_ROOT / "data" / "audio"
+    audio_retention_days: int = 7
+    max_utterance_seconds: int = 20
+
     database_url: str = f"sqlite:///{(REPO_ROOT / 'data' / 'scenespeak.db').as_posix()}"
     # ASR words below this confidence are never used as evidence of a user mistake.
     low_confidence_threshold: float = 0.6

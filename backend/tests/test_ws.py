@@ -52,6 +52,8 @@ def test_full_order_over_websocket(ws):
         assert reply["type"] == "npc_reply"
         state = ws.receive_json()
         assert state["type"] == "scene_state"
+        timing = ws.receive_json()
+        assert timing["type"] == "turn_timing" and timing["seq"] == seq
 
     assert reply["action"] == "close"
     assert state["phase"] == "completed"
@@ -179,3 +181,118 @@ def test_npc_speaks_through_llm_when_configured(ws, services):
     reply = _until(ws, "npc_reply")
     assert reply["text"] == "Hey! What can I get started for you?"
     assert reply["source"] == "llm"
+
+
+def _pcm_b64(seconds: float = 1.0, rate: int = 16000) -> str:
+    import base64
+
+    return base64.b64encode(b"\x00\x01" * int(rate * seconds)).decode()
+
+
+@pytest.fixture
+def voice(services, tmp_path):
+    from app.ai.stt.mock import MockSTT
+    from app.ai.tts.mock import MockTTS
+    from app.users.audio_store import AudioStore
+
+    services.stt = MockSTT(default_text="I want hot latte.")
+    services.tts = MockTTS()
+    services.audio_store = AudioStore(tmp_path / "audio", retention_days=7)
+    return services
+
+
+def test_audio_utterance_is_transcribed_and_answered_with_audio(ws, voice):
+    ws.send_json({"type": "session_start"})
+    greet_audio = _until(ws, "npc_audio")
+    assert greet_audio["seq"] == 1 and greet_audio["format"] == "wav"
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
+    )
+    transcript = _until(ws, "user_transcript")
+    assert transcript["text"] == "I want hot latte."
+    assert [w["word"] for w in transcript["words"]] == ["I", "want", "hot", "latte."]
+    assert _until(ws, "npc_reply")["action"] == "ask_size"
+    audio = _until(ws, "npc_audio")
+    assert audio["seq"] == 2 and audio["sample_rate"] == 24000
+    timing = _until(ws, "turn_timing")
+    assert timing["seq"] == 1 and timing["total_ms"] >= timing["stt_ms"]
+    session_dir = next((voice.audio_store.root).iterdir())
+    assert [f.name for f in session_dir.iterdir()] == ["001.wav"]
+
+
+def test_low_confidence_words_are_reported(ws, voice):
+    from app.ai.types import Transcript, WordInfo
+
+    class LowConfidenceSTT:
+        def transcribe(self, audio, *, hotwords=None):
+            assert "cold brew" in hotwords and "oat milk" in hotwords
+            words = [
+                WordInfo(word="oat", start=0.0, end=0.3, confidence=0.4),
+                WordInfo(word="latte", start=0.3, end=0.6, confidence=0.95),
+            ]
+            return Transcript(
+                text="oat latte",
+                words=words,
+                language="en",
+                audio_duration_ms=600,
+                latency_ms=5,
+                model_id="low",
+            )
+
+    voice.stt = LowConfidenceSTT()
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
+    )
+    assert _until(ws, "user_transcript")["low_confidence_spans"] == ["oat"]
+
+
+def test_tts_failure_keeps_the_conversation_going(ws, voice):
+    from app.ai.types import AdapterError
+
+    class BrokenTTS:
+        def synthesize(self, text, *, voice):
+            raise AdapterError("no GPU")
+
+    voice.tts = BrokenTTS()
+    ws.send_json({"type": "session_start"})
+    assert _until(ws, "npc_audio_failed")["reason"] == "tts_failed"
+    ws.send_json({"type": "text_utterance", "seq": 1, "text": "I want hot latte."})
+    assert _until(ws, "npc_reply")["action"] == "ask_size"
+
+
+@pytest.mark.parametrize(
+    ("payload", "code"),
+    [
+        ({"pcm16_base64": "not base64!!"}, "bad_audio"),
+        ({"pcm16_base64": _pcm_b64(25)}, "bad_audio"),
+        ({"pcm16_base64": "AAAA"}, "bad_audio"),  # 3 bytes: not 16-bit aligned
+    ],
+)
+def test_bad_audio_is_rejected(ws, voice, payload, code):
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    ws.send_json({"type": "audio_utterance", "seq": 1, "sample_rate": 16000, **payload})
+    assert _until(ws, "error")["code"] == code
+
+
+def test_silence_gives_no_speech_error(ws, voice):
+    from app.ai.stt.mock import MockSTT
+
+    voice.stt = MockSTT(default_text="")
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
+    )
+    assert _until(ws, "error")["code"] == "no_speech"
+
+
+def test_audio_without_stt_configured(ws):
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
+    )
+    assert _until(ws, "error")["code"] == "stt_unavailable"

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import type { ReactNode } from "react";
+
+import { MicButton } from "../microphone/MicButton";
+import type { MicStatus } from "../microphone/useMicrophone";
 import type { ChatLine } from "./conversationReducer";
 
 interface Props {
@@ -9,6 +13,22 @@ interface Props {
   canFix: boolean;
   onSay: (text: string) => void;
   onFix: (seq: number, text: string) => void;
+  mic: { status: MicStatus; error: string | null; start: () => void; stop: () => void };
+}
+
+/** Underlines words the recognizer was unsure about. */
+function withUncertain(text: string, uncertain: string[] = []): ReactNode {
+  if (uncertain.length === 0) return text;
+  const unsure = new Set(uncertain.map((w) => w.toLowerCase().replace(/[^a-z0-9']/g, "")));
+  return text.split(/(\s+)/).map((part, i) =>
+    unsure.has(part.toLowerCase().replace(/[^a-z0-9']/g, "")) ? (
+      <mark key={i} className="uncertain" title="인식이 불확실한 단어">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
 }
 
 function UserLine({ line, canFix, onFix }: { line: ChatLine; canFix: boolean; onFix: Props["onFix"] }) {
@@ -38,8 +58,8 @@ function UserLine({ line, canFix, onFix }: { line: ChatLine; canFix: boolean; on
   }
   return (
     <>
-      <span className="who">You</span>
-      {line.text}
+      <span className="who">You{line.spoken ? " · 음성" : ""}</span>
+      {withUncertain(line.text, line.uncertain)}
       {canFix && (
         <button
           className="link fix-btn"
@@ -56,7 +76,15 @@ function UserLine({ line, canFix, onFix }: { line: ChatLine; canFix: boolean; on
   );
 }
 
-export function ConversationView({ lines, disabled, waiting, canFix, onSay, onFix }: Props) {
+export function ConversationView({
+  lines,
+  disabled,
+  waiting,
+  canFix,
+  onSay,
+  onFix,
+  mic,
+}: Props) {
   const [draft, setDraft] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -94,7 +122,9 @@ export function ConversationView({ lines, disabled, waiting, canFix, onSay, onFi
         )}
       </ol>
       <div ref={bottom} />
+      {mic.error && <p className="banner error">{mic.error}</p>}
       <form className="composer" onSubmit={submit}>
+        <MicButton status={mic.status} disabled={disabled} onStart={mic.start} onStop={mic.stop} />
         <label htmlFor="utterance" className="visually-hidden">
           영어로 말하기
         </label>

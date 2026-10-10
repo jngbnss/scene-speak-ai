@@ -5,6 +5,7 @@ export type SlotValue = string | number | null;
 export type ClientMessage =
   | { type: "session_start"; scene_id?: string; nickname?: string }
   | { type: "text_utterance"; seq: number; text: string }
+  | { type: "audio_utterance"; seq: number; sample_rate: number; pcm16_base64: string }
   | { type: "transcript_fix"; seq: number; corrected_text: string }
   | { type: "session_end"; reason: "user" };
 
@@ -48,6 +49,17 @@ export type ServerMessage =
       action: string;
       source: string;
       latency_ms: number;
+    }
+  | { type: "npc_audio"; seq: number; format: "wav"; sample_rate: number; data_base64: string }
+  | { type: "npc_audio_failed"; seq: number; reason: string }
+  | {
+      type: "turn_timing";
+      seq: number;
+      stt_ms: number;
+      npc_ms: number;
+      llm_ms: number;
+      tts_ms: number;
+      total_ms: number;
     }
   | { type: "task_result"; success: boolean; reason: string | null }
   | { type: "feedback_pending"; session_id: string }

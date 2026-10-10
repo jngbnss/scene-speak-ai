@@ -128,3 +128,16 @@ button.link { border: 0; background: none; padding: 2px 4px; color: var(--accent
 .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--tile); color: var(--ink); }
 .sentences { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
 .review-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+
+/* step 3: microphone, uncertain words, timing */
+.mic { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.mic-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.mic[aria-pressed="true"] { border-color: var(--accent); }
+.mic-listening .mic-dot { background: var(--ok); }
+.mic-hearing .mic-dot { background: var(--bad); animation: pulse 0.9s ease-in-out infinite; }
+.mic-paused .mic-dot { background: var(--warn); }
+@keyframes pulse { 50% { transform: scale(1.5); opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .mic-hearing .mic-dot { animation: none; } }
+mark.uncertain { background: none; color: inherit; text-decoration: underline wavy var(--warn); text-underline-offset: 3px; }
+.timing { margin: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.composer { flex-wrap: wrap; }

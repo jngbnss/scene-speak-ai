@@ -16,15 +16,22 @@ log = logging.getLogger(__name__)
 
 
 def _warm_up() -> None:
-    llm = get_services().npc_llm
-    warm = getattr(llm, "warm_up", None)
-    if warm is None:
-        return
-    try:
-        warm()
-        log.info("LLM warmed up")
-    except Exception as exc:  # the app still works; the first turn is just slow
-        log.warning("LLM warm-up failed: %s", exc)
+    """Loads models before the first user turn (first CUDA calls take 15-30 s)."""
+    services = get_services()
+    if services.audio_store is not None:
+        removed = services.audio_store.cleanup()
+        if removed:
+            log.info("deleted %d expired recording folders", removed)
+    adapters = (("LLM", services.npc_llm), ("STT", services.stt), ("TTS", services.tts))
+    for name, adapter in adapters:
+        warm = getattr(adapter, "warm_up", None)
+        if warm is None:
+            continue
+        try:
+            warm()
+            log.info("%s warmed up", name)
+        except Exception as exc:  # the app still works; the first turn is just slow
+            log.warning("%s warm-up failed: %s", name, exc)
 
 
 @asynccontextmanager

@@ -114,3 +114,27 @@
 - 날짜: 2026-10-11
 - 결정: `evals/results/*.json`은 커밋한다. 음성이나 개인정보가 없고, 개선 전후 비교의 근거이기 때문이다.
 - 상태: 채택
+
+## D-019 Windows 실행 환경 대응
+- 날짜: 2026-10-11
+- 결정:
+  - PyAV DLL을 Windows 스마트 앱 컨트롤이 차단해서 faster-whisper import가 실패했다. PyAV는 파일 디코딩에만 쓰이고 우리는 PCM을 직접 넘기므로, PyAV를 불러올 수 없을 때는 빈 모듈로 대체한다(`app/ai/runtime.py`). 보안 정책은 바꾸지 않는다.
+  - CUDA 12 라이브러리(cuBLAS, cuDNN, cudart, cuFFT, cuRAND)는 NVIDIA pip 패키지로 가상환경 안에만 설치하고, 실행 시 DLL 경로를 등록한다(`requirements-gpu.txt`). 시스템 CUDA 설치는 필요 없다.
+  - onnxruntime-gpu 1.31은 CUDA 13용이라 CUDA 12용 1.22를 쓴다.
+- 상태: 채택
+
+## D-020 음성 모델 기본값
+- 날짜: 2026-10-11
+- 결정: STT는 faster-whisper `small.en`(GPU, `int8_float16`)에 문장 프롬프트, 토큰 제한 없음(EXP-ASR-001 조건 H). TTS는 Kokoro-82M ONNX(GPU). 서버를 시작할 때 세 모델(LLM, STT, TTS)을 미리 올린다.
+- 근거: CPU에서는 STT가 3~7초, TTS가 2~5초 걸려 턴 예산 3초를 넘는다. GPU에서는 STT 0.24~0.35초, TTS 0.7~1.0초. VRAM은 Qwen3 포함 약 7.7GB / 8GB로 빠듯하다.
+- 상태: 채택
+
+## D-021 TTS 라이선스 주의 (GPL)
+- 날짜: 2026-10-11
+- 결정: kokoro-onnx(MIT)는 `phonemizer-fork`(GPL-3.0+)와 `espeakng-loader`(espeak-ng DLL, GPL-3.0)에 의존한다. 서버에서 실행만 하는 MVP에는 문제가 없지만, 백엔드를 묶어서 배포한다면 GPL 의무(소스 공개 등)가 생긴다. NVIDIA CUDA 라이브러리는 독점 라이선스라 함께 묶어 배포하지 않는다. 단계 4의 `docs/licenses.md`에서 대안(espeak-ng를 쓰지 않는 G2P)과 함께 정리한다.
+- 상태: 채택 (단계 4에서 재검토)
+
+## D-022 브라우저 VAD 자산은 직접 서빙, NPC가 말할 때는 마이크 일시정지
+- 날짜: 2026-10-11
+- 결정: `@ricky0123/vad-web` 0.0.30(Silero v5)의 모델·AudioWorklet·onnxruntime wasm을 빌드 전에 `public/vad/`로 복사해 직접 서빙한다(CDN 의존 없음, GitHub Pages에서도 동작). NPC 음성이 재생 중이거나 응답을 기다리는 동안에는 VAD를 일시정지해 NPC 목소리가 녹음되지 않게 한다.
+- 상태: 채택

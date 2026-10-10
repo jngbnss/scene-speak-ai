@@ -1,15 +1,22 @@
 import asyncio
+import base64
+import binascii
 import json
 import logging
+import time
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, ValidationError
 
+from app.ai.types import AdapterError, AudioInput, WordInfo
 from app.api.deps import Services, get_services
 from app.api.messages import (
+    AudioUtterance,
     ErrorOut,
     FeedbackPending,
     FeedbackReady,
+    NpcAudio,
+    NpcAudioFailed,
     NpcReplyOut,
     SceneInfo,
     SceneState,
@@ -19,7 +26,9 @@ from app.api.messages import (
     TaskResult,
     TextUtterance,
     TranscriptFix,
+    TurnTiming,
     UserTranscript,
+    WordOut,
     client_message_adapter,
 )
 from app.evaluation.evaluator import Evaluator, SessionSummary, UserLine
@@ -65,10 +74,35 @@ class _Connection:
     async def error(self, code: str, message: str, recoverable: bool = True) -> None:
         await self.send(ErrorOut(code=code, message=message, recoverable=recoverable))
 
-    async def send_turn(self, result: TurnResult) -> None:
+    async def speak(self, seq: int, text: str) -> int:
+        """Sends the NPC line as audio. Returns TTS time in ms. Failure never stops the scene."""
+        tts = self.services.tts
+        if tts is None or self.session is None:
+            return 0
+        voice = self.session.scene.npc.voice
+        try:
+            audio = await asyncio.to_thread(tts.synthesize, text, voice=voice)
+        except AdapterError as exc:
+            log.warning("TTS failed: %s", exc)
+            await self.send(NpcAudioFailed(seq=seq, reason="tts_failed"))
+            return 0
+        await self.send(
+            NpcAudio(
+                seq=seq,
+                sample_rate=audio.sample_rate,
+                data_base64=base64.b64encode(audio.wav_bytes).decode("ascii"),
+            )
+        )
+        return audio.latency_ms
+
+    async def send_turn(
+        self, result: TurnResult, *, user_seq: int = 0, stt_ms: int = 0, started: float = 0.0
+    ) -> None:
         session = self.session
         assert session is not None
         turn = result.turn
+        npc_ms = int((time.perf_counter() - started) * 1000) - stt_ms if started else 0
+        tts_ms = 0
         if result.reply is not None:
             self.npc_seq += 1
             reply = result.reply
@@ -92,6 +126,19 @@ class _Connection:
                 user_turns=session.director.state.user_turns,
             )
         )
+        if result.reply is not None:
+            tts_ms = await self.speak(self.npc_seq, result.reply.text)
+        if started:
+            timing = TurnTiming(
+                seq=user_seq,
+                stt_ms=stt_ms,
+                npc_ms=max(npc_ms, 0),
+                llm_ms=result.reply.llm_latency_ms if result.reply else 0,
+                tts_ms=tts_ms,
+                total_ms=int((time.perf_counter() - started) * 1000),
+            )
+            log.info("turn timing %s", timing.model_dump_json())
+            await self.send(timing)
         if turn.ended and turn.success is not None:
             await self.send(TaskResult(success=turn.success, reason=turn.end_reason))
             await self.finish(turn.success, turn.end_reason)
@@ -139,17 +186,82 @@ class _Connection:
         )
         await self.send_turn(await asyncio.to_thread(self.session.start))
 
-    async def on_text(self, msg: TextUtterance) -> None:
+    async def _check_active(self) -> bool:
         if self.session is None:
             await self.error("no_session", "Send session_start first.")
-            return
+            return False
         if self.session.ended:
             await self.error("session_ended", "This scene has ended. Start a new session.")
+            return False
+        return True
+
+    async def _user_turn(
+        self,
+        seq: int,
+        text: str,
+        started: float,
+        words: list[WordInfo] | None = None,
+        stt_ms: int = 0,
+    ) -> None:
+        session = self.session
+        assert session is not None
+        threshold = self.services.settings.low_confidence_threshold
+        words = words or []
+        self.user_seqs.add(seq)
+        self.services.repo.add_utterance(session.id, seq, "user", text, words)
+        await self.send(
+            UserTranscript(
+                seq=seq,
+                text=text,
+                words=[WordOut(**w.model_dump()) for w in words],
+                low_confidence_spans=[
+                    w.word for w in words if w.confidence is not None and w.confidence < threshold
+                ],
+            )
+        )
+        result = await asyncio.to_thread(session.handle_text, text)
+        await self.send_turn(result, user_seq=seq, stt_ms=stt_ms, started=started)
+
+    async def on_text(self, msg: TextUtterance) -> None:
+        if await self._check_active():
+            await self._user_turn(msg.seq, msg.text, time.perf_counter())
+
+    async def on_audio(self, msg: AudioUtterance) -> None:
+        started = time.perf_counter()
+        if not await self._check_active():
             return
-        self.user_seqs.add(msg.seq)
-        self.services.repo.add_utterance(self.session.id, msg.seq, "user", msg.text)
-        await self.send(UserTranscript(seq=msg.seq, text=msg.text))
-        await self.send_turn(await asyncio.to_thread(self.session.handle_text, msg.text))
+        session = self.session
+        assert session is not None
+        stt = self.services.stt
+        if stt is None:
+            await self.error("stt_unavailable", "Speech recognition is not configured.")
+            return
+        try:
+            pcm = base64.b64decode(msg.pcm16_base64, validate=True)
+        except (binascii.Error, ValueError):
+            await self.error("bad_audio", "Audio must be base64-encoded 16-bit PCM.")
+            return
+        audio = AudioInput(pcm16=pcm, sample_rate=msg.sample_rate)
+        limit = self.services.settings.max_utterance_seconds
+        if len(pcm) % 2 or audio.duration_ms > limit * 1000:
+            await self.error("bad_audio", f"Utterances must be 16-bit PCM and under {limit} s.")
+            return
+        if self.services.audio_store is not None:
+            self.services.audio_store.save(session.id, msg.seq, pcm, msg.sample_rate)
+        try:
+            transcript = await asyncio.to_thread(
+                stt.transcribe, audio, hotwords=session.scene.hotwords
+            )
+        except AdapterError as exc:
+            log.warning("STT failed: %s", exc)
+            await self.error("stt_failed", "Speech recognition failed. Please try again.")
+            return
+        if not transcript.text.strip():
+            await self.error("no_speech", "No words were recognized. Please try again.")
+            return
+        await self._user_turn(
+            msg.seq, transcript.text, started, transcript.words, transcript.latency_ms
+        )
 
     async def on_fix(self, msg: TranscriptFix) -> None:
         if self.session is None or msg.seq not in self.user_seqs:
@@ -185,6 +297,8 @@ async def session_socket(ws: WebSocket) -> None:
                     await conn.on_start(msg)
                 case TextUtterance():
                     await conn.on_text(msg)
+                case AudioUtterance():
+                    await conn.on_audio(msg)
                 case TranscriptFix():
                     await conn.on_fix(msg)
                 case SessionEnd():

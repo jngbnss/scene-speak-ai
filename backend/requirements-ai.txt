@@ -1,0 +1,7 @@
+# Speech models. Not installed in CI (tests use mock adapters).
+-r requirements.txt
+faster-whisper==1.1.0
+kokoro-onnx==0.4.7
+numpy>=1.26,<3
+# faster-whisper imports requests but newer huggingface_hub no longer pulls it in
+requests>=2.31

@@ -6,6 +6,9 @@ export interface ChatLine {
   seq: number;
   text: string;
   action?: string;
+  /** Words the speech recognizer was unsure about. */
+  uncertain?: string[];
+  spoken?: boolean;
 }
 
 export type FeedbackStatus = "none" | "pending" | "ready";
@@ -21,7 +24,15 @@ export interface ConversationState {
   result: { success: boolean; reason: string | null } | null;
   feedback: FeedbackStatus;
   waitingForNpc: boolean;
+  timing: TurnTiming | null;
   error: string | null;
+}
+
+export interface TurnTiming {
+  stt_ms: number;
+  npc_ms: number;
+  tts_ms: number;
+  total_ms: number;
 }
 
 export const initialConversation: ConversationState = {
@@ -35,6 +46,7 @@ export const initialConversation: ConversationState = {
   result: null,
   feedback: "none",
   waitingForNpc: false,
+  timing: null,
   error: null,
 };
 
@@ -62,10 +74,18 @@ export function conversationReducer(
     case "user_transcript": {
       const id = `u${msg.seq}`;
       const exists = state.lines.some((l) => l.id === id);
+      const spoken = msg.words.length > 0;
+      const uncertain = msg.low_confidence_spans;
       const lines = exists
-        ? state.lines.map((l) => (l.id === id ? { ...l, text: msg.text } : l))
-        : [...state.lines, { id, speaker: "user" as const, seq: msg.seq, text: msg.text }];
-      return { ...state, error: null, lines };
+        ? state.lines.map((l) =>
+            // A typed correction replaces the recognized words.
+            l.id === id ? { ...l, text: msg.text, uncertain: spoken ? uncertain : [] } : l,
+          )
+        : [
+            ...state.lines,
+            { id, speaker: "user" as const, seq: msg.seq, text: msg.text, uncertain, spoken },
+          ];
+      return { ...state, error: null, waitingForNpc: exists ? state.waitingForNpc : true, lines };
     }
     case "npc_reply":
       return {
@@ -86,6 +106,19 @@ export function conversationReducer(
       };
     case "task_result":
       return { ...state, result: { success: msg.success, reason: msg.reason } };
+    case "turn_timing":
+      return {
+        ...state,
+        timing: {
+          stt_ms: msg.stt_ms,
+          npc_ms: msg.npc_ms,
+          tts_ms: msg.tts_ms,
+          total_ms: msg.total_ms,
+        },
+      };
+    case "npc_audio":
+    case "npc_audio_failed":
+      return state;
     case "feedback_pending":
       return { ...state, feedback: "pending" };
     case "feedback_ready":

@@ -107,3 +107,44 @@ describe("conversationReducer", () => {
     expect(conversationReducer(dirty, { type: "reset" })).toBe(initialConversation);
   });
 });
+
+describe("voice input", () => {
+  const spoken: ServerMessage = {
+    type: "user_transcript",
+    seq: 1,
+    text: "I want oat latte",
+    words: [
+      { word: "I", start: 0, end: 0.2, confidence: 0.98 },
+      { word: "want", start: 0.2, end: 0.4, confidence: 0.97 },
+      { word: "oat", start: 0.4, end: 0.6, confidence: 0.41 },
+      { word: "latte", start: 0.6, end: 0.9, confidence: 0.9 },
+    ],
+    low_confidence_spans: ["oat"],
+  };
+
+  it("marks spoken lines and their uncertain words", () => {
+    const state = run([started, spoken]);
+    expect(state.lines[0].spoken).toBe(true);
+    expect(state.lines[0].uncertain).toEqual(["oat"]);
+    expect(state.waitingForNpc).toBe(true);
+  });
+
+  it("a typed correction clears the uncertain marks but not the waiting state", () => {
+    const afterReply = run([started, spoken, npc(1, "Sure!")]);
+    const fixed = conversationReducer(afterReply, {
+      type: "server",
+      msg: { ...spoken, text: "I want an oat latte", words: [], low_confidence_spans: [] },
+    });
+    expect(fixed.lines[0].text).toBe("I want an oat latte");
+    expect(fixed.lines[0].uncertain).toEqual([]);
+    expect(fixed.waitingForNpc).toBe(false);
+  });
+
+  it("keeps the latest turn timing", () => {
+    const state = run([
+      started,
+      { type: "turn_timing", seq: 1, stt_ms: 400, npc_ms: 600, llm_ms: 550, tts_ms: 800, total_ms: 1900 },
+    ]);
+    expect(state.timing?.total_ms).toBe(1900);
+  });
+});

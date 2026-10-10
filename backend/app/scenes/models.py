@@ -121,5 +121,12 @@ class Scene(_Strict):
     def max_user_turns(self) -> int | None:
         return next((c.max_user_turns for c in self.end_conditions if c.max_user_turns), None)
 
+    @property
+    def hotwords(self) -> list[str]:
+        """Menu words that help the speech recognizer (EXP-ASR-001)."""
+        words = [d.name for d in self.menu.drinks]
+        words += [a for m in self.menu.milks for a in m.aliases if " " in a and m.id != "none"]
+        return list(dict.fromkeys(words))
+
     def allowed_next_phases(self, phase_id: str) -> list[str]:
         return next(p.next for p in self.phases if p.id == phase_id)

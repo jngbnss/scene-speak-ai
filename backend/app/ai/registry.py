@@ -21,12 +21,36 @@ def _ollama(s: Settings) -> OllamaLLM:
     )
 
 
-STT_PROVIDERS: dict[str, Callable[[Settings], STTAdapter]] = {"mock": lambda s: MockSTT()}
+def _faster_whisper(s: Settings) -> STTAdapter:
+    from app.ai.stt.faster_whisper import FasterWhisperSTT  # heavy; only when selected
+
+    return FasterWhisperSTT(
+        s.whisper_model,
+        device=s.whisper_device,
+        compute_type=s.whisper_compute_type,
+        beam_size=s.whisper_beam_size,
+        context_mode=s.whisper_context_mode,
+    )
+
+
+def _kokoro(s: Settings) -> TTSAdapter:
+    from app.ai.tts.kokoro import KokoroTTS  # heavy; only when selected
+
+    return KokoroTTS(s.kokoro_model_path, s.kokoro_voices_path, device=s.kokoro_device)
+
+
+STT_PROVIDERS: dict[str, Callable[[Settings], STTAdapter]] = {
+    "mock": lambda s: MockSTT(),
+    "faster_whisper": _faster_whisper,
+}
 LLM_PROVIDERS: dict[str, Callable[[Settings], LLMAdapter]] = {
     "mock": lambda s: MockLLM(),
     "ollama": _ollama,
 }
-TTS_PROVIDERS: dict[str, Callable[[Settings], TTSAdapter]] = {"mock": lambda s: MockTTS()}
+TTS_PROVIDERS: dict[str, Callable[[Settings], TTSAdapter]] = {
+    "mock": lambda s: MockTTS(),
+    "kokoro": _kokoro,
+}
 ALIGNER_PROVIDERS: dict[str, Callable[[Settings], AlignerAdapter]] = {
     "mock": lambda s: MockAligner()
 }
