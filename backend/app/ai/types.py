@@ -10,6 +10,10 @@ from typing import Literal, Protocol
 from pydantic import BaseModel, Field
 
 
+class AdapterError(RuntimeError):
+    """A model call failed (timeout, connection, malformed output). Callers fall back."""
+
+
 class AudioInput(BaseModel):
     pcm16: bytes = Field(repr=False)
     sample_rate: int = 16000

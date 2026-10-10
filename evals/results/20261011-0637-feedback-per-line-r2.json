@@ -1,0 +1,209 @@
+{
+  "label": "per-line-r2",
+  "created_at": "2026-10-11T06:37:25",
+  "provider": "ollama",
+  "model_id": "ollama:qwen3:8b",
+  "cases": 10,
+  "metrics": {
+    "precision": 0.875,
+    "recall": 1.0,
+    "f1": 0.933,
+    "false_feedback_rate": 0.125,
+    "clean_cases_flagged": "0/3",
+    "tp": 7,
+    "fp": 1,
+    "fn": 0
+  },
+  "details": [
+    {
+      "id": "fb-01",
+      "gold": [
+        {
+          "original": "I want hot latte.",
+          "type": "article"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "I want hot latte.",
+          "corrected": "I want a hot latte.",
+          "type": "article",
+          "explanation_ko": "I want a hot latte. 라테는 'a'를 써야 해요."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-02",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-03",
+      "gold": [
+        {
+          "original": "I'd like two latte, please.",
+          "type": "plural"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "I'd like two latte, please.",
+          "corrected": "I'd like two lattes, please.",
+          "type": "plural",
+          "explanation_ko": "latte는 복수형으로 'lattes'로 써야 합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-04",
+      "gold": [
+        {
+          "original": "Can I has a cold brew?",
+          "type": "verb_form"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "Can I has a cold brew?",
+          "corrected": "Can I have a cold brew?",
+          "type": "verb_form",
+          "explanation_ko": "Can I has는 'Can I have'로 올바르게 표현해야 합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-05",
+      "gold": [
+        {
+          "original": "Give me hot chocolate.",
+          "type": "article"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "Give me hot chocolate.",
+          "corrected": "Give me a hot chocolate.",
+          "type": "article",
+          "explanation_ko": "‘hot chocolate’ 앞에 ‘a’를 붙여야 합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-06",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-07",
+      "gold": [
+        {
+          "original": "I want a americano iced.",
+          "type": "article"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "I want a americano iced.",
+          "corrected": "I want an iced americano.",
+          "type": "article",
+          "explanation_ko": "‘iced’는 형용사로, ‘a’ 대신 ‘an’을 사용해야 합니다. ‘iced americano’는 하나의 음료이므로 ‘an’을 사용해야 합니다."
+        },
+        {
+          "original": "Medium size please.",
+          "corrected": "A medium size, please.",
+          "type": "article",
+          "explanation_ko": "‘medium size’는 하나의 크기이므로 ‘a’를 사용해야 합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 1,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-08",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-09",
+      "gold": [
+        {
+          "original": "I would like an latte with almond milk.",
+          "type": "article"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "I would like an latte with almond milk.",
+          "corrected": "I would like a latte with almond milk.",
+          "type": "article",
+          "explanation_ko": "latte는 자주 'a'를 사용합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-10",
+      "gold": [
+        {
+          "original": "She want a hot chocolate for my friend.",
+          "type": "subject_verb_agreement"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "She want a hot chocolate for my friend.",
+          "corrected": "She wants a hot chocolate for my friend.",
+          "type": "subject_verb_agreement",
+          "explanation_ko": "주어가 'She'이므로 동사가 'wants'여야 합니다."
+        }
+      ],
+      "unnatural": [],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    }
+  ]
+}

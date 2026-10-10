@@ -55,7 +55,7 @@ def test_mock_aligner_spreads_words():
 
 
 def test_registry_defaults_to_mocks():
-    s = Settings()
+    s = Settings(_env_file=None)
     assert isinstance(registry.get_stt(s), MockSTT)
     assert isinstance(registry.get_llm(s), MockLLM)
     assert isinstance(registry.get_tts(s), MockTTS)
@@ -64,4 +64,4 @@ def test_registry_defaults_to_mocks():
 
 def test_registry_rejects_unknown_provider():
     with pytest.raises(ValueError, match="Available: mock"):
-        registry.get_llm(Settings(llm_provider="gpt"))
+        registry.get_llm(Settings(_env_file=None, llm_provider="gpt"))

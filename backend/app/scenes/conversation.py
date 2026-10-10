@@ -3,10 +3,12 @@
 import uuid
 from dataclasses import dataclass
 
+from app.ai.types import LLMAdapter
 from app.scenes.director import Director, DirectorTurn
 from app.scenes.guard import OutputGuard
+from app.scenes.llm_assist import LLMAssist
 from app.scenes.models import Scene
-from app.scenes.responder import NpcReply, Responder, TemplateResponder
+from app.scenes.responder import LLMResponder, NpcReply, Responder, TemplateResponder
 
 
 @dataclass(frozen=True)
@@ -16,21 +18,32 @@ class TurnResult:
 
 
 class ConversationSession:
-    def __init__(self, scene: Scene, responder: Responder | None = None) -> None:
-        self.id = uuid.uuid4().hex
+    """With ``llm`` the NPC speaks through the LLM; without it, through templates."""
+
+    def __init__(
+        self, scene: Scene, llm: LLMAdapter | None = None, session_id: str | None = None
+    ) -> None:
+        self.id = session_id or uuid.uuid4().hex
         self.scene = scene
         self.director = Director(scene)
         guard = OutputGuard(scene, self.director.extractor)
-        self.responder = responder or TemplateResponder(scene, guard)
+        self.responder: Responder
+        if llm is None:
+            self.responder = TemplateResponder(scene, guard)
+        else:
+            self.responder = LLMResponder(scene, guard, llm)
+            self.director.assist = LLMAssist(scene, self.director.extractor, llm)
         self.transcript: list[tuple[str, str]] = []
+        self.replies: list[NpcReply] = []
 
     @property
     def ended(self) -> bool:
         return self.director.state.phase in ("completed", "cancelled")
 
     def _respond(self, turn: DirectorTurn) -> TurnResult:
-        reply = self.responder.reply(turn)
+        reply = self.responder.reply(turn, self.transcript)
         self.transcript.append(("npc", reply.text))
+        self.replies.append(reply)
         return TurnResult(turn, reply)
 
     def start(self) -> TurnResult:

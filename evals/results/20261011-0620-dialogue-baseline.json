@@ -1,0 +1,54 @@
+{
+  "label": "baseline",
+  "created_at": "2026-10-11T06:20:31",
+  "git_commit": "f3fb90a",
+  "provider": "ollama",
+  "model_id": "ollama:qwen3:8b",
+  "cases": 21,
+  "npc_replies": 78,
+  "metrics": {
+    "scene_deviation_rate": 0.051,
+    "menu_hallucination_rate": 0.0,
+    "retry_rate": 0.051,
+    "template_fallback_rate": 0.026,
+    "final_guard_pass_rate": 1.0,
+    "action_accuracy": 1.0,
+    "latency_ms_mean": 632,
+    "latency_ms_p50": 552,
+    "latency_ms_p95": 1026
+  },
+  "violation_samples": [
+    {
+      "case": "normal-three-turns",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "What size would you like? We have small, medium, or large."
+    },
+    {
+      "case": "single-temperature-autofill",
+      "action": "offer_options",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "Any milk preference or an extra shot?"
+    },
+    {
+      "case": "cancel-mid-order",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "Great! What size would you like?"
+    },
+    {
+      "case": "turn-limit",
+      "action": "clarify",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "What would you like? Latte, Americano, cold brew, or hot chocolate?"
+    }
+  ]
+}

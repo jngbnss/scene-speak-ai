@@ -35,3 +35,14 @@ def test_count_sentences():
     assert count_sentences("Hi there! What can I get for you today?") == 2
     assert count_sentences("So that's a large latte. Is that everything?") == 2
     assert count_sentences("One sentence") == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Sorry, we only serve cold brew iced. Is that okay?",
+        "Our cold brew comes iced. Enjoy your latte!",
+    ],
+)
+def test_ordinary_barista_phrasing_passes(guard, text):
+    assert guard.check(text).ok, guard.check(text).violations

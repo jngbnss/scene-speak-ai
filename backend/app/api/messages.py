@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 class SessionStart(BaseModel):
     type: Literal["session_start"]
     scene_id: str | None = None
+    nickname: str = Field(default="guest", max_length=40)
 
 
 class TextUtterance(BaseModel):
@@ -18,12 +19,20 @@ class TextUtterance(BaseModel):
     text: str = Field(min_length=1, max_length=500)
 
 
+class TranscriptFix(BaseModel):
+    type: Literal["transcript_fix"]
+    seq: int
+    corrected_text: str = Field(min_length=1, max_length=500)
+
+
 class SessionEnd(BaseModel):
     type: Literal["session_end"]
     reason: Literal["user"] = "user"
 
 
-ClientMessage = Annotated[SessionStart | TextUtterance | SessionEnd, Field(discriminator="type")]
+ClientMessage = Annotated[
+    SessionStart | TextUtterance | TranscriptFix | SessionEnd, Field(discriminator="type")
+]
 client_message_adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
 
 # ----- server -> client -------------------------------------------------------------------
@@ -42,6 +51,7 @@ class SceneInfo(BaseModel):
 class SessionStarted(BaseModel):
     type: Literal["session_started"] = "session_started"
     session_id: str
+    user_id: int
     scene: SceneInfo
 
 
@@ -74,12 +84,24 @@ class NpcReplyOut(BaseModel):
     text: str
     action: str
     source: str
+    latency_ms: int = 0
 
 
 class TaskResult(BaseModel):
     type: Literal["task_result"] = "task_result"
     success: bool
     reason: str | None
+
+
+class FeedbackPending(BaseModel):
+    type: Literal["feedback_pending"] = "feedback_pending"
+    session_id: str
+
+
+class FeedbackReady(BaseModel):
+    type: Literal["feedback_ready"] = "feedback_ready"
+    session_id: str
+    source: str
 
 
 class ErrorOut(BaseModel):

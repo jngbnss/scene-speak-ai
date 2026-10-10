@@ -71,3 +71,10 @@ def test_unknown_mentions_for_guard(extractor):
     assert (
         extractor.unknown_mentions("We have latte, Americano, cold brew, or hot chocolate.") == []
     )
+
+
+def test_off_menu_word_before_drink_is_one_unknown_item(extractor):
+    ext = extractor.extract("Can I get a matcha latte?")
+    assert ext.unknown_item == "matcha latte"
+    assert "drink" not in ext.slots
+    assert extractor.unknown_mentions("Try our matcha latte.") == ["matcha latte"]

@@ -3,15 +3,38 @@ from pathlib import Path
 
 import pytest
 
-from app.core.config import REPO_ROOT
+from app.ai.llm.mock import MockLLM
+from app.api.deps import Services, set_services
+from app.core.config import REPO_ROOT, Settings
 from app.scenes.director import Director
 from app.scenes.extractor import RuleExtractor
 from app.scenes.guard import OutputGuard
 from app.scenes.loader import load_scene_file
 from app.scenes.models import Scene
+from app.users.db import make_sessionmaker
+from app.users.repository import Repository
 
 SCENE_PATH = REPO_ROOT / "scenes" / "new-york-cafe.yaml"
 DIALOGUE_CASES = REPO_ROOT / "evals" / "dialogue-cases.jsonl"
+
+
+@pytest.fixture
+def repo(tmp_path) -> Repository:
+    return Repository(make_sessionmaker(f"sqlite:///{(tmp_path / 'test.db').as_posix()}"))
+
+
+@pytest.fixture
+def services(repo) -> Services:
+    """Mock adapters and a throwaway database for tests that go through the API."""
+    s = Services(
+        settings=Settings(_env_file=None, llm_provider="mock"),
+        llm=MockLLM(),
+        npc_llm=None,
+        repo=repo,
+    )
+    set_services(s)
+    yield s
+    set_services(None)
 
 
 @pytest.fixture(scope="session")

@@ -1,0 +1,232 @@
+{
+  "label": "baseline",
+  "created_at": "2026-10-11T06:21:33",
+  "provider": "ollama",
+  "model_id": "ollama:qwen3:8b",
+  "cases": 10,
+  "metrics": {
+    "precision": 1.0,
+    "recall": 0.286,
+    "f1": 0.444,
+    "false_feedback_rate": 0.0,
+    "clean_cases_flagged": "0/3",
+    "tp": 2,
+    "fp": 0,
+    "fn": 5
+  },
+  "details": [
+    {
+      "id": "fb-01",
+      "gold": [
+        {
+          "original": "I want hot latte.",
+          "type": "article"
+        }
+      ],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "I want hot latte.",
+          "better": "I'd like a hot latte, please.",
+          "reason_ko": "원하는 음료를 요청할 때 'I'd like...' 구조를 사용하는 것이 더 자연스럽고 예의스럽습니다."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "source": "llm"
+    },
+    {
+      "id": "fb-02",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "Can I get a medium iced americano?",
+          "better": "Can I have a medium iced americano, please?",
+          "reason_ko": "요청할 때 'please'를 추가하면 더 자연스럽고 예의바르게听起来요."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-03",
+      "gold": [
+        {
+          "original": "I'd like two latte, please.",
+          "type": "plural"
+        }
+      ],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "Hot.",
+          "better": "I'd like it hot, please.",
+          "reason_ko": "온도를 요청할 때는 'I'd like it hot, please.'처럼 문장으로 표현하는 것이 자연스럽습니다."
+        },
+        {
+          "original": "Medium.",
+          "better": "I'd like it medium, please.",
+          "reason_ko": "크기나 온도를 요청할 때는 'I'd like it [adjective], please.'처럼 문장으로 표현하는 것이 자연스럽습니다."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "source": "llm"
+    },
+    {
+      "id": "fb-04",
+      "gold": [
+        {
+          "original": "Can I has a cold brew?",
+          "type": "verb_form"
+        }
+      ],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "Can I has a cold brew?",
+          "better": "Can I have a cold brew?",
+          "reason_ko": "Can I have... 형식은 요청할 때 사용하는 자연스러운 표현입니다. has는 동사가 아닙니다."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "source": "llm"
+    },
+    {
+      "id": "fb-05",
+      "gold": [
+        {
+          "original": "Give me hot chocolate.",
+          "type": "article"
+        }
+      ],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "Give me hot chocolate.",
+          "better": "I'd like a hot chocolate, please.",
+          "reason_ko": "직접적인 표현은 카페에서 부적절합니다. 요청을 더 자연스럽게 표현해야 합니다."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "source": "llm"
+    },
+    {
+      "id": "fb-06",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-07",
+      "gold": [
+        {
+          "original": "I want a americano iced.",
+          "type": "article"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "I want a americano iced.",
+          "corrected": "I want an iced americano.",
+          "type": "articles",
+          "explanation_ko": "a를 사용하기 전에 관사 'an'을 사용해야 합니다. 'iced americano'는 음료 이름이므로 관사가 필요합니다."
+        }
+      ],
+      "unnatural": [
+        {
+          "original": "Yes.",
+          "better": "Thank you.",
+          "reason_ko": "단순한 'Yes.'는 너무 간단하고 자연스럽지 않습니다. 감사 표현을 사용하는 것이 더 적절합니다."
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-08",
+      "gold": [],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "Hot please.",
+          "better": "I'd like it hot, please.",
+          "reason_ko": "직접적인 표현은 카페에서 부적절합니다. 더 자연스러운 표현이 필요합니다."
+        },
+        {
+          "original": "It is large.",
+          "better": "I'd like a large one.",
+          "reason_ko": "문법적으로는 정확하지만, 카페에서 더 자연스럽고 간결한 표현이 필요합니다."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    },
+    {
+      "id": "fb-09",
+      "gold": [
+        {
+          "original": "I would like an latte with almond milk.",
+          "type": "article"
+        }
+      ],
+      "predicted": [],
+      "unnatural": [
+        {
+          "original": "I would like an latte with almond milk.",
+          "better": "I would like a latte with almond milk.",
+          "reason_ko": "관사 'a'를 'an'으로 잘못 사용했어요. 'latte'는 자음으로 시작해서 'a'를 써야 해요."
+        }
+      ],
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "source": "llm"
+    },
+    {
+      "id": "fb-10",
+      "gold": [
+        {
+          "original": "She want a hot chocolate for my friend.",
+          "type": "subject_verb_agreement"
+        }
+      ],
+      "predicted": [
+        {
+          "original": "She want a hot chocolate for my friend.",
+          "corrected": "She wants a hot chocolate for my friend.",
+          "type": "grammar_errors",
+          "explanation_ko": "주어 'She'가 3인칭 단수이므로 동사 'want'가 'wants'로 바뀌어야 해요."
+        }
+      ],
+      "unnatural": [
+        {
+          "original": "Yes, please.",
+          "better": "That's it, please.",
+          "reason_ko": "Yes, please."
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "source": "llm"
+    }
+  ]
+}

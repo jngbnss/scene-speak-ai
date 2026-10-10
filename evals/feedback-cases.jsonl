@@ -1,0 +1,10 @@
+{"id": "fb-01", "lines": ["I want hot latte.", "Large, please.", "Yes, that's all."], "gold": [{"original": "I want hot latte.", "type": "article"}], "note": "관사 누락 1개. 'Large, please.'는 정상 구어체"}
+{"id": "fb-02", "lines": ["Can I get a medium iced americano?", "No, that's it.", "Yes."], "gold": [], "note": "오류 없음. 잘못된 지적이 나오면 FP"}
+{"id": "fb-03", "lines": ["I'd like two latte, please.", "Hot.", "Medium."], "gold": [{"original": "I'd like two latte, please.", "type": "plural"}], "note": "복수형 누락"}
+{"id": "fb-04", "lines": ["Can I has a cold brew?", "Small one.", "That's all."], "gold": [{"original": "Can I has a cold brew?", "type": "verb_form"}], "note": "조동사 뒤 동사 원형"}
+{"id": "fb-05", "lines": ["Give me hot chocolate.", "Large.", "Yes."], "gold": [{"original": "Give me hot chocolate.", "type": "article"}], "note": "관사. 'Give me'는 표현 문제(unnatural)로 별도 집계 가능, 문법 정답에는 관사만"}
+{"id": "fb-06", "lines": ["Could I have a large hot latte with oat milk?", "That's everything, thank you."], "gold": [], "note": "오류 없음"}
+{"id": "fb-07", "lines": ["I want a americano iced.", "Medium size please.", "Yes."], "gold": [{"original": "I want a americano iced.", "type": "article"}], "note": "모음 앞 an. 어순(iced americano)은 자연스러움 문제로 봄"}
+{"id": "fb-08", "lines": ["Can I get a latte?", "Hot please.", "It is large.", "Yes that's all."], "gold": [], "note": "오류 없음. 'It is large.'는 어색하지만 문법 오류는 아님"}
+{"id": "fb-09", "lines": ["I would like an latte with almond milk.", "Small, iced.", "Yes."], "gold": [{"original": "I would like an latte with almond milk.", "type": "article"}], "note": "자음 앞 a"}
+{"id": "fb-10", "lines": ["She want a hot chocolate for my friend.", "Medium.", "Yes, please."], "gold": [{"original": "She want a hot chocolate for my friend.", "type": "subject_verb_agreement"}], "note": "3인칭 단수 동사"}

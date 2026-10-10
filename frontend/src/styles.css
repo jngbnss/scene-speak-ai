@@ -93,3 +93,38 @@ button:disabled { opacity: 0.45; cursor: default; }
 .slot.filled { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
 .slot.filled dd { color: var(--ok); }
 .req { margin-left: 6px; font-size: 11px; color: var(--warn); }
+
+/* step 2: nickname gate, tabs, feedback, review */
+.muted { color: var(--muted); font-size: 14px; }
+button.link { border: 0; background: none; padding: 2px 4px; color: var(--accent); font-size: 13px; }
+.gate { max-width: 520px; margin: 12vh auto 0; padding-inline: 16px; display: flex; flex-direction: column; gap: 12px; }
+.gate h1 { margin: 0; font-size: 28px; line-height: 1.25; }
+.tabs { display: flex; gap: 6px; }
+.tabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.side { display: flex; flex-direction: column; gap: 10px; }
+.end-btn { align-self: stretch; }
+.bubble.typing { color: var(--muted); }
+.fix-btn { margin-left: 6px; }
+.fix-form { display: flex; gap: 6px; flex-wrap: wrap; }
+.fix-form input { flex: 1; min-width: 160px; font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.fix-form button { padding: 4px 10px; font-size: 13px; }
+
+.feedback, .review { display: flex; flex-direction: column; gap: 12px; }
+.feedback h2, .review h2 { margin: 0; font-size: 20px; }
+.summary { margin: 0; font-size: 16px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; color: var(--muted); }
+.card h4 { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.card p { margin: 0; }
+.card .ok { color: var(--ok); font-weight: 600; }
+.card .warn { color: var(--warn); font-weight: 600; }
+.correction { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.correction:last-child { border-bottom: 0; padding-bottom: 0; }
+.strike { text-decoration: line-through; text-decoration-color: var(--bad); color: var(--muted); }
+.strike.soft { text-decoration-color: var(--warn); }
+.fix { color: var(--ok); font-weight: 600; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--tile); color: var(--ink); }
+.sentences { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+.review-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }

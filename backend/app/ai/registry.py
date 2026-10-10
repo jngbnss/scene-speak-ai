@@ -4,13 +4,28 @@ from collections.abc import Callable
 
 from app.ai.alignment.mock import MockAligner
 from app.ai.llm.mock import MockLLM
+from app.ai.llm.ollama import OllamaLLM
 from app.ai.stt.mock import MockSTT
 from app.ai.tts.mock import MockTTS
 from app.ai.types import AlignerAdapter, LLMAdapter, STTAdapter, TTSAdapter
 from app.core.config import Settings
 
+
+def _ollama(s: Settings) -> OllamaLLM:
+    return OllamaLLM(
+        s.ollama_url,
+        s.ollama_model,
+        think=s.ollama_think,
+        keep_alive=s.ollama_keep_alive,
+        timeout_s=s.llm_timeout_s,
+    )
+
+
 STT_PROVIDERS: dict[str, Callable[[Settings], STTAdapter]] = {"mock": lambda s: MockSTT()}
-LLM_PROVIDERS: dict[str, Callable[[Settings], LLMAdapter]] = {"mock": lambda s: MockLLM()}
+LLM_PROVIDERS: dict[str, Callable[[Settings], LLMAdapter]] = {
+    "mock": lambda s: MockLLM(),
+    "ollama": _ollama,
+}
 TTS_PROVIDERS: dict[str, Callable[[Settings], TTSAdapter]] = {"mock": lambda s: MockTTS()}
 ALIGNER_PROVIDERS: dict[str, Callable[[Settings], AlignerAdapter]] = {
     "mock": lambda s: MockAligner()

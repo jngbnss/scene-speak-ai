@@ -4,6 +4,7 @@ The LLM never holds state. It only phrases the action chosen here, so task succe
 decided deterministically and can be unit tested.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from app.scenes.extractor import Extraction, RuleExtractor
@@ -62,9 +63,16 @@ def human_join(items: list[str], conj: str = "or") -> str:
 
 
 class Director:
-    def __init__(self, scene: Scene, extractor: RuleExtractor | None = None) -> None:
+    def __init__(
+        self,
+        scene: Scene,
+        extractor: RuleExtractor | None = None,
+        assist: Callable[[str], Extraction | None] | None = None,
+    ) -> None:
         self.scene = scene
         self.extractor = extractor or RuleExtractor(scene)
+        # Consulted only when the rules understood nothing (e.g. "something sweet").
+        self.assist = assist
         self.state = OrderState()
 
     # ----- public API -------------------------------------------------------------------
@@ -77,6 +85,8 @@ class Director:
             raise SessionEndedError("The scene has already ended.")
         self.state.user_turns += 1
         ext = self.extractor.extract(text)
+        if ext.is_empty and self.assist is not None:
+            ext = self.assist(text) or ext
         action, context = self._decide(ext)
         limit = self.scene.max_user_turns
         if (

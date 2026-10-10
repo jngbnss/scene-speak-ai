@@ -16,6 +16,8 @@ STOPWORDS = frozenset(
     and or but with of for to get have want like take order need make try give
     instead actually maybe um uh oh okay ok hi hello hey so well another same more
     coffee drink cup usual today now here thanks thank is be
+    are was has had got serve serves served only comes come made brewed enjoy recommend
+    offer offers love really usually fresh great nice good
     """.split()
 )
 
@@ -43,10 +45,15 @@ class Extraction:
     slots: dict[str, str | int] = field(default_factory=dict)
     unknown_item: str | None = None
     intents: set[str] = field(default_factory=set)
+    source: str = "rules"  # "rules" | "llm"
 
     @property
     def is_empty(self) -> bool:
         return not self.slots and self.unknown_item is None and not self.intents
+
+
+def _off_menu_indices(matches: list[_Match]) -> set[int]:
+    return {i for m in matches if m.category == "off_menu" for i in range(m.start, m.end)}
 
 
 def tokenize(text: str) -> list[Token]:
@@ -103,10 +110,19 @@ class RuleExtractor:
         return sorted(matches, key=lambda m: m.start)
 
     @staticmethod
-    def _unknown_prefix(tokens: list[Token], match: _Match, covered: set[int]) -> list[str]:
+    def _unknown_prefix(
+        tokens: list[Token], match: _Match, covered: set[int], off_menu: set[int]
+    ) -> list[str]:
+        """Words right before a drink name that make it a different drink.
+
+        Unknown words ("pumpkin spice latte") and off-menu terms ("matcha latte") count;
+        scene vocabulary ("hot latte") and stopwords ("a latte") do not.
+        """
         words: list[str] = []
         i = match.start - 1
-        while i >= 0 and tokens[i].is_word and i not in covered and tokens[i].text not in STOPWORDS:
+        while i >= 0 and tokens[i].is_word and tokens[i].text not in STOPWORDS:
+            if i in covered and i not in off_menu:
+                break
             words.insert(0, tokens[i].text)
             i -= 1
         return words
@@ -142,10 +158,11 @@ class RuleExtractor:
         tokens = tokenize(text)
         matches = self._menu_matches(tokens)
         covered = {i for m in matches for i in range(m.start, m.end)}
+        off_menu = _off_menu_indices(matches)
         result = Extraction(intents=self._intents_in(tokens))
         for m in matches:
             if m.category in ("drink", "off_menu"):
-                prefix = self._unknown_prefix(tokens, m, covered)
+                prefix = self._unknown_prefix(tokens, m, covered, off_menu)
                 if prefix or m.category == "off_menu":
                     name = " ".join(t.text for t in tokens[m.start : m.end])
                     result.unknown_item = " ".join([*prefix, name])
@@ -165,11 +182,16 @@ class RuleExtractor:
         tokens = tokenize(text)
         matches = self._menu_matches(tokens)
         covered = {i for m in matches for i in range(m.start, m.end)}
-        found = []
+        off_menu = _off_menu_indices(matches)
+        found: list[str] = []
         for m in matches:
             if m.category not in ("drink", "off_menu"):
                 continue
-            prefix = self._unknown_prefix(tokens, m, covered)
+            prefix = self._unknown_prefix(tokens, m, covered, off_menu)
             if prefix or m.category == "off_menu":
-                found.append(" ".join([*prefix, *(t.text for t in tokens[m.start : m.end])]))
+                mention = " ".join([*prefix, *(t.text for t in tokens[m.start : m.end])])
+                # "matcha latte" replaces the "matcha" found just before it.
+                if found and mention.startswith(found[-1] + " "):
+                    found.pop()
+                found.append(mention)
         return found
