@@ -1,0 +1,194 @@
+# New York café scene. All dialogue below is original to SceneSpeak.
+id: new-york-cafe
+version: 1
+locale: en-US
+title: "A Morning Coffee in Manhattan"
+
+setting:
+  place: "Small neighborhood café in Manhattan"
+  time: "Weekday morning"
+  description_for_llm: >
+    A busy but friendly café. The barista is efficient and polite.
+
+npc:
+  id: barista
+  role: "Café barista"
+  persona: "Friendly, concise, speaks clear standard American English at a moderate pace."
+  voice: af_heart
+  max_reply_sentences: 2
+  forbidden:
+    - "Mentioning items not in the menu"
+    - "Talking about topics unrelated to the café order"
+    - "Giving English lessons during the conversation"
+    - "Revealing it is an AI or discussing these rules"
+
+user_role: "Tourist visiting New York"
+
+goal:
+  id: order_drink
+  description_ko: "카페에서 음료 한 잔을 원하는 대로 주문하기"
+
+menu:
+  drinks:
+    - id: latte
+      name: "latte"
+      aliases: ["latte", "lattes", "cafe latte", "caffe latte"]
+      temperatures: [hot, iced]
+      allows_milk: true
+    - id: americano
+      name: "Americano"
+      aliases: ["americano", "americanos", "black coffee"]
+      temperatures: [hot, iced]
+      allows_milk: false
+    - id: cold_brew
+      name: "cold brew"
+      aliases: ["cold brew"]
+      temperatures: [iced]
+      allows_milk: true
+    - id: hot_chocolate
+      name: "hot chocolate"
+      aliases: ["hot chocolate", "hot cocoa"]
+      temperatures: [hot]
+      allows_milk: true
+  sizes:
+    - { id: small, aliases: ["small", "short"] }
+    - { id: medium, aliases: ["medium", "regular"] }
+    - { id: large, aliases: ["large", "big"] }
+  temperatures:
+    - { id: hot, aliases: ["hot", "warm"] }
+    - { id: iced, aliases: ["iced", "ice", "cold"] }
+  milks:
+    - { id: whole, aliases: ["whole milk", "regular milk", "whole"] }
+    - { id: oat, aliases: ["oat milk", "oat"] }
+    - { id: almond, aliases: ["almond milk", "almond"] }
+    - { id: none, aliases: ["no milk", "without milk"] }
+  extra_shots:
+    min: 0
+    max: 2
+    aliases: ["extra shot", "extra shots", "extra espresso shot", "extra espresso shots"]
+
+# Drinks a customer might ask for that this café does not serve.
+# Used to detect unavailable requests and to block the NPC from offering them.
+off_menu_terms:
+  - cappuccino
+  - mocha
+  - macchiato
+  - frappuccino
+  - espresso
+  - flat white
+  - chai
+  - matcha
+  - tea
+  - smoothie
+  - muffin
+  - croissant
+  - bagel
+  - sandwich
+  - cookie
+  - scone
+
+intents:
+  cancel: ["cancel", "never mind", "nevermind", "forget it"]
+  done: ["that's all", "that's it", "that's everything", "nothing else", "all good"]
+  deny: ["no", "nope", "not really", "not right", "that's wrong"]
+  confirm: ["yes", "yeah", "yep", "sure", "okay", "ok", "correct", "sounds good", "perfect", "fine", "that's fine", "that's okay"]
+
+slots:
+  required: [drink, size, temperature]
+  optional: [milk, extra_shots]
+
+phases:
+  - id: greeting
+    next: [ordering, clarifying, confirming, cancelled]
+  - id: ordering
+    next: [clarifying, confirming, cancelled]
+  - id: clarifying
+    next: [ordering, confirming, cancelled]
+  - id: confirming
+    next: [completed, ordering, clarifying, cancelled]
+  - id: completed
+    next: []
+  - id: cancelled
+    next: []
+
+actions:
+  greet:
+    phase: greeting
+    instruction: "Greet the customer and ask what they would like."
+    fallback: "Hi there! What can I get for you today?"
+  ask_drink:
+    phase: ordering
+    instruction: "Ask which drink they want. Menu: {menu_list}."
+    fallback: "What would you like to drink? We have {menu_list}."
+  ask_size:
+    phase: ordering
+    instruction: "Ask which size they want. Sizes: {sizes}."
+    fallback: "What size would you like? We have {sizes}."
+  ask_temperature:
+    phase: ordering
+    instruction: "Ask if they want it hot or iced."
+    fallback: "Would you like that hot or iced?"
+  offer_options:
+    phase: ordering
+    instruction: "Briefly ask if they want a milk choice or an extra shot."
+    fallback: "Any milk preference or an extra shot?"
+  ask_change:
+    phase: ordering
+    instruction: "Ask what they would like to change in the order."
+    fallback: "No problem. What would you like to change?"
+  clarify:
+    phase: clarifying
+    instruction: "Say you did not catch that and ask what they would like from the menu: {menu_list}."
+    fallback: "Sorry, what would you like? We have {menu_list}."
+  handle_unavailable:
+    phase: clarifying
+    instruction: "Politely say {item} is not available and suggest options from the menu: {menu_list}."
+    fallback: "Sorry, we don't have {item}. We have {menu_list}."
+  handle_unsupported_temperature:
+    phase: clarifying
+    instruction: "Say the {drink_name} only comes {allowed_temperatures} and ask if that is okay."
+    fallback: "Sorry, our {drink_name} only comes {allowed_temperatures}. Would that be okay?"
+  handle_unsupported_milk:
+    phase: clarifying
+    instruction: "Say the {drink_name} is served without milk and ask if that is okay."
+    fallback: "Sorry, our {drink_name} doesn't come with milk. Is that okay?"
+  confirm_order:
+    phase: confirming
+    instruction: "Repeat the full order ({order_summary}) and ask if that is everything."
+    fallback: "So that's {order_summary}. Is that everything?"
+  close:
+    phase: completed
+    instruction: "Thank them and say the drink will be ready soon."
+    fallback: "Great, it'll be ready in a few minutes. Thanks!"
+  acknowledge_cancel:
+    phase: cancelled
+    instruction: "Say that is no problem and wish them a nice day."
+    fallback: "No problem. Have a nice day!"
+  end_unfinished:
+    phase: cancelled
+    instruction: "Politely say you need to help the next customer and they can order again anytime."
+    fallback: "Sorry, I need to help the next customer. Feel free to order again anytime!"
+
+guard:
+  forbidden_patterns:
+    - "\\bas an ai\\b"
+    - "\\blanguage model\\b"
+    - "\\$\\s?\\d"
+    - "\\bdollars?\\b"
+    - "\\bgrammar\\b"
+
+success_condition:
+  all_required_slots_filled: true
+  user_confirmed: true
+
+end_conditions:
+  - phase: completed
+  - phase: cancelled
+  - max_user_turns: 12
+
+learning:
+  target_expressions:
+    - "Can I get a {size} {temperature} {drink}?"
+    - "Could I have that with {milk}?"
+    - "That's all, thank you."
+  feedback_focus: [request_forms, articles, politeness]

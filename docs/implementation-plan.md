@@ -15,7 +15,7 @@ SceneSpeak MVP를 어떤 순서로, 어떤 설계로 만드는지 정리한 문�
 
 | 단계 | 내용 | 설계 Phase | 상태 |
 |---|---|---|---|
-| 1 | 뼈대 + Scene Director (텍스트 주문) | 0 + 1 | 🟡 진행중 |
+| 1 | 뼈대 + Scene Director (텍스트 주문) | 0 + 1 | ✅ 완료 |
 | 2 | LLM NPC + 피드백·학습 기록 | 2 + 3 | ⬜ 대기 |
 | 3 | 음성 입력 + 음성 출력 | 4 + 5 | ⬜ 대기 |
 | 4 | 발화 분석 + 평가 리포트 + OSS 정리 | 6 + 7 | ⬜ 대기 |
@@ -72,7 +72,7 @@ scene-speak-ai/
 
 ---
 
-## 단계 1 — 뼈대 + Scene Director 🟡 진행중
+## 단계 1 — 뼈대 + Scene Director ✅ 완료
 
 **목표:** 브라우저에서 텍스트로 주문하면 Director가 상태를 관리하고 템플릿 대사로 응답해 주문 완료(또는 취소)까지 진행된다.
 
@@ -89,9 +89,9 @@ scene-speak-ai/
 | WebSocket `/ws/session` | ✅ |
 | 대화 케이스 20개 (`evals/dialogue-cases.jsonl`) | ✅ |
 | 프론트: 대화 화면, 주문 상태 패널, 결과 배너 | ✅ |
-| CI 워크플로 | ⬜ |
-| README, `.env.example`, 결정 기록 갱신 | ⬜ |
-| 스모크 테스트 | ⬜ |
+| CI 워크플로 | ✅ |
+| README, `.env.example`, 결정 기록 갱신 (D-011 ~ D-014) | ✅ |
+| 스모크 테스트 | ✅ |
 
 ### 완료 기준
 
@@ -99,6 +99,22 @@ scene-speak-ai/
 - 서버를 띄우고 다음 시나리오가 끝까지 동작
   - "I want hot latte" → "Large, please. And can I have oat milk?" → "Yes, that's all" → 주문 성공
   - 메뉴에 없는 요청(pumpkin spice latte), cold brew를 hot으로 요청 → 안내 후 정상 주문
+
+### 결과 (2026-10-11)
+
+| 검사 | 결과 |
+|---|---|
+| pytest | 86개 통과 (대화 케이스 20개 포함) |
+| Ruff lint / format | 통과 |
+| 장면 파일 검사 | 통과 |
+| tsc / vitest / build | 통과 / 5개 통과 / 통과 |
+| 스모크 테스트 | 5개 시나리오 통과 (정상 주문, 메뉴 밖 요청, cold brew hot, Americano + 우유, 취소) |
+
+스모크 방법: uvicorn(8000)과 Vite(5173)를 띄우고 Vite 프록시를 거쳐 `ws://localhost:5173/ws/session`으로 시나리오를 실행했다.
+
+발견하고 고친 문제: Vite 프록시가 `localhost`를 IPv6로 연결해 WebSocket이 거부됨 → 대상을 `127.0.0.1`로 변경 (D-014).
+
+남은 한계: 메뉴에 없는 일반 명사는 감지하지 못하고 clarify로 처리한다 (D-012, 단계 2에서 보완).
 
 ---
 

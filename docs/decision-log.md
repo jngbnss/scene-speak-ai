@@ -63,3 +63,32 @@
 - 날짜: 2026-10-11
 - 결정: 반복 오류 조회는 SQLite 질의로 처리한다. 임베딩·FAISS는 필요가 측정되면 도입한다.
 - 상태: 채택
+
+## D-011 장면 YAML 확장
+- 날짜: 2026-10-11
+- 결정: 설계 초안의 장면 구조에 다음을 추가했다.
+  - `intents` (cancel/done/deny/confirm 표현), `off_menu_terms`, `guard.forbidden_patterns`, `menu.extra_shots.aliases`
+  - 각 action에 `phase` (행동이 장면 단계를 결정)
+  - 행동 추가: `ask_drink`, `ask_change`, `clarify`, `handle_unsupported_temperature`, `handle_unsupported_milk`, `acknowledge_cancel`, `end_unfinished`
+  - 우유 선택지 `none`(no milk)
+- 근거: 의도 표현과 금지 표현까지 YAML에 두어야 "장면 지식은 코드에 쓰지 않는다" 원칙이 지켜진다. 메뉴 제약(cold brew는 iced만, Americano는 우유 불가)을 행동으로 구분해야 템플릿과 LLM 지시가 정확해진다.
+- 상태: 채택
+
+## D-012 메뉴 외 품목 감지 방식
+- 날짜: 2026-10-11
+- 결정: 음료 별칭 바로 앞에 장면 어휘·불용어가 아닌 단어가 붙으면("pumpkin spice latte") 메뉴 외 품목으로 본다. `off_menu_terms`에 있는 단어도 메뉴 외 품목이다. 같은 로직을 출력 가드에서 재사용한다.
+- 근거: 단계 1에는 LLM이 없으므로 규칙만으로 "없는 메뉴"를 판단해야 한다. 가드와 공유하면 NPC가 "maple latte"를 지어내는 것도 같은 기준으로 막힌다.
+- 한계: 메뉴에 없는 일반 명사("something sweet")는 감지하지 못하고 clarify로 처리된다. 단계 2에서 LLM의 extracted 값으로 보완한다.
+- 상태: 채택
+
+## D-013 단계 1 응답은 템플릿만 사용
+- 날짜: 2026-10-11
+- 결정: `Responder` 인터페이스를 두고 단계 1은 `TemplateResponder`(YAML fallback 문장)만 구현한다. 장면 검사기는 모든 fallback 문장이 출력 가드를 통과하는지 CI에서 확인한다.
+- 근거: 단계 2의 LLM 응답이 가드에 두 번 실패할 때 쓸 안전한 문장이 항상 존재해야 한다.
+- 상태: 채택
+
+## D-014 Vite 프록시는 127.0.0.1로 연결
+- 날짜: 2026-10-11
+- 결정: 개발 프록시 대상을 `localhost`가 아니라 `127.0.0.1:8000`으로 지정한다.
+- 근거: Node 17 이상은 `localhost`를 IPv6(`::1`)로 먼저 연결하는데, uvicorn 기본 설정은 `127.0.0.1`만 열어 WebSocket 프록시가 ECONNREFUSED로 실패했다(스모크 테스트에서 발견).
+- 상태: 채택

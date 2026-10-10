@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scenespeak.local/schema/scene.schema.json",
+  "title": "SceneSpeak scene",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "version", "locale", "title", "setting", "npc", "user_role", "goal",
+    "menu", "off_menu_terms", "intents", "slots", "phases", "actions", "guard",
+    "success_condition", "end_conditions", "learning"
+  ],
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "aliases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9' ]+$" }
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "aliases"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "aliases": { "$ref": "#/$defs/aliases" }
+      }
+    },
+    "phrases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9' ]+$" }
+    }
+  },
+  "properties": {
+    "id": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "locale": { "type": "string", "pattern": "^[a-z]{2}-[A-Z]{2}$" },
+    "title": { "$ref": "#/$defs/nonEmptyString" },
+    "setting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["place", "time", "description_for_llm"],
+      "properties": {
+        "place": { "$ref": "#/$defs/nonEmptyString" },
+        "time": { "$ref": "#/$defs/nonEmptyString" },
+        "description_for_llm": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "npc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "persona", "voice", "max_reply_sentences", "forbidden"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "role": { "$ref": "#/$defs/nonEmptyString" },
+        "persona": { "$ref": "#/$defs/nonEmptyString" },
+        "voice": { "$ref": "#/$defs/nonEmptyString" },
+        "max_reply_sentences": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "forbidden": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } }
+      }
+    },
+    "user_role": { "$ref": "#/$defs/nonEmptyString" },
+    "goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description_ko"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description_ko": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "menu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["drinks", "sizes", "temperatures", "milks", "extra_shots"],
+      "properties": {
+        "drinks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "aliases", "temperatures", "allows_milk"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "name": { "$ref": "#/$defs/nonEmptyString" },
+              "aliases": { "$ref": "#/$defs/aliases" },
+              "temperatures": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/id" }
+              },
+              "allows_milk": { "type": "boolean" }
+            }
+          }
+        },
+        "sizes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/option" } },
+        "temperatures": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/option" } },
+        "milks": { "type": "array", "items": { "$ref": "#/$defs/option" } },
+        "extra_shots": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max", "aliases"],
+          "properties": {
+            "min": { "type": "integer", "minimum": 0 },
+            "max": { "type": "integer", "minimum": 0 },
+            "aliases": { "$ref": "#/$defs/aliases" }
+          }
+        }
+      }
+    },
+    "off_menu_terms": { "$ref": "#/$defs/phrases" },
+    "intents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cancel", "done", "deny", "confirm"],
+      "properties": {
+        "cancel": { "$ref": "#/$defs/phrases" },
+        "done": { "$ref": "#/$defs/phrases" },
+        "deny": { "$ref": "#/$defs/phrases" },
+        "confirm": { "$ref": "#/$defs/phrases" }
+      }
+    },
+    "slots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "optional"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["drink", "size", "temperature", "milk", "extra_shots"] }
+        },
+        "optional": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["drink", "size", "temperature", "milk", "extra_shots"] }
+        }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "next"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "next": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+        }
+      }
+    },
+    "actions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phase", "instruction", "fallback"],
+        "properties": {
+          "phase": { "$ref": "#/$defs/id" },
+          "instruction": { "$ref": "#/$defs/nonEmptyString" },
+          "fallback": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forbidden_patterns"],
+      "properties": {
+        "forbidden_patterns": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } }
+      }
+    },
+    "success_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all_required_slots_filled", "user_confirmed"],
+      "properties": {
+        "all_required_slots_filled": { "type": "boolean" },
+        "user_confirmed": { "type": "boolean" }
+      }
+    },
+    "end_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "maxProperties": 1,
+        "properties": {
+          "phase": { "$ref": "#/$defs/id" },
+          "max_user_turns": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_expressions", "feedback_focus"],
+      "properties": {
+        "target_expressions": { "type": "array", "items": { "$ref": "#/$defs/nonEmptyString" } },
+        "feedback_focus": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+"""WebSocket message contracts (docs/design.md 2.4). Mirrored in frontend/src/types/messages.ts."""
+
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field, TypeAdapter
+
+# ----- client -> server -------------------------------------------------------------------
+
+
+class SessionStart(BaseModel):
+    type: Literal["session_start"]
+    scene_id: str | None = None
+
+
+class TextUtterance(BaseModel):
+    type: Literal["text_utterance"]
+    seq: int
+    text: str = Field(min_length=1, max_length=500)
+
+
+class SessionEnd(BaseModel):
+    type: Literal["session_end"]
+    reason: Literal["user"] = "user"
+
+
+ClientMessage = Annotated[SessionStart | TextUtterance | SessionEnd, Field(discriminator="type")]
+client_message_adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
+
+# ----- server -> client -------------------------------------------------------------------
+
+
+class SceneInfo(BaseModel):
+    id: str
+    title: str
+    place: str
+    user_role: str
+    goal_ko: str
+    required_slots: list[str]
+    optional_slots: list[str]
+
+
+class SessionStarted(BaseModel):
+    type: Literal["session_started"] = "session_started"
+    session_id: str
+    scene: SceneInfo
+
+
+class WordOut(BaseModel):
+    word: str
+    start: float
+    end: float
+    confidence: float | None
+
+
+class UserTranscript(BaseModel):
+    type: Literal["user_transcript"] = "user_transcript"
+    seq: int
+    text: str
+    words: list[WordOut] = []
+    low_confidence_spans: list[str] = []
+
+
+class SceneState(BaseModel):
+    type: Literal["scene_state"] = "scene_state"
+    phase: str
+    slots: dict[str, str | int | None]
+    missing_required: list[str]
+    user_turns: int
+
+
+class NpcReplyOut(BaseModel):
+    type: Literal["npc_reply"] = "npc_reply"
+    seq: int
+    text: str
+    action: str
+    source: str
+
+
+class TaskResult(BaseModel):
+    type: Literal["task_result"] = "task_result"
+    success: bool
+    reason: str | None
+
+
+class ErrorOut(BaseModel):
+    type: Literal["error"] = "error"
+    code: str
+    message: str
+    recoverable: bool = True
