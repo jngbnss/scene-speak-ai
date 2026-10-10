@@ -1,0 +1,48 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# AI models (downloaded, never committed)
+models/
+*.gguf
+*.onnx
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+
+# audio and user data (privacy: never committed)
+*.wav
+*.mp3
+*.webm
+*.ogg
+*.flac
+*.m4a
+evals/audio/**
+!evals/audio/.gitkeep
+!evals/audio/manifest.example.jsonl
+data/
+*.sqlite
+*.db
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
