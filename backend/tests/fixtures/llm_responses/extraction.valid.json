@@ -1,0 +1,5 @@
+[
+  {"drink": "hot chocolate", "size": null, "temperature": null, "milk": null, "extra_shots": null, "requested_item_not_on_menu": null, "intent": "order"},
+  {"drink": null, "size": "large", "temperature": "iced", "milk": "oat", "extra_shots": 2, "requested_item_not_on_menu": null, "intent": "modify"},
+  {"drink": null, "size": null, "temperature": null, "milk": null, "extra_shots": null, "requested_item_not_on_menu": "pumpkin spice latte", "intent": "order"}
+]

@@ -1,0 +1,5 @@
+[
+  {"grammar_errors": [{"original": "I want hot latte.", "corrected": "I want a hot latte."}], "summary": "ok"},
+  {"lines": [{"line": "I want hot latte.", "grammar_ok": "no"}], "recommended_sentences": [], "review_items": [], "summary": ""},
+  {"lines": [], "recommended_sentences": "Can I get a latte?", "review_items": [], "summary": ""}
+]

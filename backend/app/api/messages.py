@@ -15,7 +15,7 @@ class SessionStart(BaseModel):
 
 class TextUtterance(BaseModel):
     type: Literal["text_utterance"]
-    seq: int
+    seq: int = Field(ge=0)
     text: str = Field(min_length=1, max_length=500)
 
 
@@ -23,14 +23,14 @@ class AudioUtterance(BaseModel):
     """One utterance cut by the browser VAD: 16-bit little-endian mono PCM, base64."""
 
     type: Literal["audio_utterance"]
-    seq: int
+    seq: int = Field(ge=0)
     sample_rate: int = Field(ge=8000, le=48000)
     pcm16_base64: str = Field(min_length=1)
 
 
 class TranscriptFix(BaseModel):
     type: Literal["transcript_fix"]
-    seq: int
+    seq: int = Field(ge=0)
     corrected_text: str = Field(min_length=1, max_length=500)
 
 
@@ -74,7 +74,7 @@ class WordOut(BaseModel):
 
 class UserTranscript(BaseModel):
     type: Literal["user_transcript"] = "user_transcript"
-    seq: int
+    seq: int = Field(ge=0)
     text: str
     words: list[WordOut] = []
     low_confidence_spans: list[str] = []
@@ -90,7 +90,7 @@ class SceneState(BaseModel):
 
 class NpcReplyOut(BaseModel):
     type: Literal["npc_reply"] = "npc_reply"
-    seq: int
+    seq: int = Field(ge=0)
     text: str
     action: str
     source: str
@@ -99,7 +99,7 @@ class NpcReplyOut(BaseModel):
 
 class NpcAudio(BaseModel):
     type: Literal["npc_audio"] = "npc_audio"
-    seq: int
+    seq: int = Field(ge=0)
     format: Literal["wav"] = "wav"
     sample_rate: int
     data_base64: str
@@ -107,7 +107,7 @@ class NpcAudio(BaseModel):
 
 class NpcAudioFailed(BaseModel):
     type: Literal["npc_audio_failed"] = "npc_audio_failed"
-    seq: int
+    seq: int = Field(ge=0)
     reason: str
 
 
@@ -115,7 +115,7 @@ class TurnTiming(BaseModel):
     """Per-turn latency in ms. stt_ms is 0 for typed input."""
 
     type: Literal["turn_timing"] = "turn_timing"
-    seq: int
+    seq: int = Field(ge=0)
     stt_ms: int
     npc_ms: int  # Director + LLM (+ retry)
     llm_ms: int

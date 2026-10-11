@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 
 import { fetchReview } from "../../services/api";
 import type { ReviewData } from "../../types/messages";
+import { ShadowPractice } from "../speech/ShadowPractice";
 
 export function ReviewView({ userId }: { userId: number }) {
   const [data, setData] = useState<ReviewData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [practicing, setPracticing] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,14 +59,24 @@ export function ReviewView({ userId }: { userId: number }) {
           {data.review_items.length === 0 ? (
             <p className="muted">대화를 마치면 여기에 연습할 문장이 쌓여요.</p>
           ) : (
-            <ul className="sentences">
-              {data.review_items.map((r) => (
-                <li key={r.sentence}>
-                  {r.sentence}
-                  {r.times > 1 && <span className="muted"> ×{r.times}</span>}
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="muted">문장을 골라 소리 내어 읽으면 빠지거나 덧붙인 단어를 알려 드려요.</p>
+              <ul className="sentences">
+                {data.review_items.map((r) => (
+                  <li key={r.sentence}>
+                    {r.sentence}
+                    {r.times > 1 && <span className="muted"> ×{r.times}</span>}{" "}
+                    {practicing === r.sentence ? (
+                      <ShadowPractice sentence={r.sentence} onClose={() => setPracticing(null)} />
+                    ) : (
+                      <button className="link" onClick={() => setPracticing(r.sentence)}>
+                        따라 말하기
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </article>
       </div>

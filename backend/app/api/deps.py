@@ -4,8 +4,8 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from app.ai.registry import get_llm, get_stt, get_tts
-from app.ai.types import AdapterError, LLMAdapter, STTAdapter, TTSAdapter
+from app.ai.registry import get_aligner, get_llm, get_stt, get_tts
+from app.ai.types import AdapterError, AlignerAdapter, LLMAdapter, STTAdapter, TTSAdapter
 from app.core.config import Settings, get_settings
 from app.users.audio_store import AudioStore
 from app.users.db import make_sessionmaker
@@ -23,6 +23,8 @@ class Services:
     stt: STTAdapter | None = None
     tts: TTSAdapter | None = None
     audio_store: AudioStore | None = None
+    # Post-session speech analysis. None = feedback without pause/segment hints.
+    aligner: AlignerAdapter | None = None
 
 
 _services: Services | None = None
@@ -51,6 +53,7 @@ def build_services(settings: Settings) -> Services:
         stt=_optional("STT", lambda: get_stt(settings)),
         tts=_optional("TTS", lambda: get_tts(settings)),
         audio_store=AudioStore(settings.audio_dir, settings.audio_retention_days),
+        aligner=_optional("aligner", lambda: get_aligner(settings)),
     )
 
 

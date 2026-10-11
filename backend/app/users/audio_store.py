@@ -1,9 +1,14 @@
 """User recordings on disk (never in Git). Kept for "listen again", deleted after N days."""
 
+import re
 import shutil
 import time
 import wave
 from pathlib import Path
+
+from app.ai.types import AudioInput
+
+_SESSION_ID = re.compile(r"^[0-9a-f]{32}$")
 
 
 class AudioStore:
@@ -12,7 +17,20 @@ class AudioStore:
         self.retention_days = retention_days
 
     def path(self, session_id: str, seq: int) -> Path:
+        if not _SESSION_ID.match(session_id) or seq < 0:
+            raise ValueError("bad session id or line number")
         return self.root / session_id / f"{seq:03d}.wav"
+
+    def load(self, session_id: str, seq: int) -> AudioInput | None:
+        """The saved recording, or None if the line was typed or the file expired."""
+        try:
+            path = self.path(session_id, seq)
+        except ValueError:
+            return None
+        if not path.is_file():
+            return None
+        with wave.open(str(path), "rb") as w:
+            return AudioInput(pcm16=w.readframes(w.getnframes()), sample_rate=w.getframerate())
 
     def save(self, session_id: str, seq: int, pcm16: bytes, sample_rate: int) -> Path:
         path = self.path(session_id, seq)

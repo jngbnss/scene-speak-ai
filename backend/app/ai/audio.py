@@ -15,6 +15,15 @@ def float_to_pcm16(samples: np.ndarray) -> bytes:
     return (clipped * 32767.0).astype("<i2").tobytes()
 
 
+def rms_dbfs(pcm16: bytes) -> float:
+    """Loudness of 16-bit PCM in dB relative to full scale (silence = -inf)."""
+    samples = pcm16_to_float(pcm16)
+    if len(samples) == 0:
+        return float("-inf")
+    rms = float(np.sqrt(np.mean(samples.astype(np.float64) ** 2)))
+    return 20 * np.log10(rms) if rms > 0 else float("-inf")
+
+
 def resample(samples: np.ndarray, src_rate: int, dst_rate: int) -> np.ndarray:
     """Linear resampling. Good enough for speech going into Whisper."""
     if src_rate == dst_rate or len(samples) == 0:

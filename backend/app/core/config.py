@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     kokoro_voices_path: Path = REPO_ROOT / "models" / "kokoro" / "voices-v1.0.bin"
     kokoro_device: str = "cuda"  # cuda | cpu
 
+    # Post-session alignment (wav2vec2). CPU keeps VRAM free for the live models; ~0.2 s/line.
+    aligner_device: str = "cpu"  # cpu | cuda
+    # None = download the pinned ONNX export into the Hugging Face cache on first use.
+    aligner_model_dir: Path | None = None
+    # Pauses at least this long inside a line are shown as "listen again" segments.
+    long_pause_ms: int = 800
+
     # User recordings are kept for "listen again" and deleted after this many days.
     audio_dir: Path = REPO_ROOT / "data" / "audio"
     audio_retention_days: int = 7
@@ -47,6 +54,9 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{(REPO_ROOT / 'data' / 'scenespeak.db').as_posix()}"
     # ASR words below this confidence are never used as evidence of a user mistake.
     low_confidence_threshold: float = 0.6
+
+    # Evaluation results shown on the /report page.
+    eval_results_dir: Path = REPO_ROOT / "evals" / "results"
 
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     log_level: str = "INFO"

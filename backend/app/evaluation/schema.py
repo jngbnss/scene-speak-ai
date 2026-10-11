@@ -47,6 +47,36 @@ class UncertainSpan(BaseModel):
     end: float | None = None
 
 
+class SpeechWord(BaseModel):
+    word: str
+    start: float
+    end: float
+    pause_before_ms: int = 0
+    uncertain: bool = False
+
+
+class ListenSegment(BaseModel):
+    """A stretch of the user's recording worth replaying (seconds from the line start)."""
+
+    start: float
+    end: float
+    reasons: list[Literal["pause", "uncertain"]]
+    text: str
+
+
+class LineSpeech(BaseModel):
+    """Post-session timing hints for one spoken line. Describes timing, never a score."""
+
+    utterance_seq: int
+    text: str
+    duration_s: float
+    words: list[SpeechWord]
+    long_pauses_ms: list[int] = []
+    segments: list[ListenSegment] = []
+    # "wav2vec2-..." when forced alignment ran, "asr" when only recognizer timings were used.
+    timing_source: str
+
+
 class Feedback(BaseModel):
     task_success: bool
     grammar_errors: list[GrammarError] = []
@@ -56,6 +86,7 @@ class Feedback(BaseModel):
     review_items: list[str] = []
     summary: str = ""
     uncertain_spans: list[UncertainSpan] = []
+    speech: list[LineSpeech] = []
     source: Literal["llm", "llm_retry", "default"] = "default"
     model_id: str | None = None
     # Items the evaluator removed and why ("not in transcript", "low ASR confidence").

@@ -3,12 +3,14 @@ import base64
 import binascii
 import json
 import logging
+import re
 import time
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, ValidationError
 
-from app.ai.types import AdapterError, AudioInput, WordInfo
+from app.ai.audio import rms_dbfs
+from app.ai.types import AdapterError, AudioInput, Transcript, WordInfo
 from app.api.deps import Services, get_services
 from app.api.messages import (
     AudioUtterance,
@@ -32,12 +34,25 @@ from app.api.messages import (
     client_message_adapter,
 )
 from app.evaluation.evaluator import Evaluator, SessionSummary, UserLine
-from app.evaluation.schema import Feedback
+from app.evaluation.schema import Feedback, LineSpeech
+from app.evaluation.speech import analyze_line
 from app.scenes.conversation import ConversationSession, TurnResult
 from app.scenes.loader import SceneNotFoundError, load_scene
 
 log = logging.getLogger(__name__)
 router = APIRouter()
+
+# Quieter than this is room noise, not speech; Whisper tends to answer silence with "You".
+SILENCE_DBFS = -55.0
+# Whisper's usual inventions on near-silence. Dropped only when it is also unsure of them.
+HALLUCINATIONS = {"you", "thank you", "thanks for watching", "bye"}
+
+
+def is_hallucination(transcript: Transcript) -> bool:
+    text = " ".join(re.sub(r"[^a-z' ]+", " ", transcript.text.lower()).split())
+    confidences = [w.confidence for w in transcript.words if w.confidence is not None]
+    unsure = not confidences or sum(confidences) / len(confidences) < 0.5
+    return text in HALLUCINATIONS and unsure
 
 
 def evaluate_session(services: Services, session: ConversationSession) -> Feedback:
@@ -58,6 +73,34 @@ def evaluate_session(services: Services, session: ConversationSession) -> Feedba
     except Exception:  # never lose the session because feedback failed
         log.exception("evaluation crashed")
         return evaluator.default(summary)
+
+
+def analyze_speech(services: Services, session_id: str) -> list[LineSpeech]:
+    """Pause and replay hints for every recorded line. Never blocks feedback on failure."""
+    store = services.audio_store
+    if store is None:
+        return []
+    settings = services.settings
+    lines = []
+    for seq, text, words in services.repo.spoken_lines(session_id):
+        audio = store.load(session_id, seq)
+        if audio is None or not text.strip():
+            continue
+        try:
+            lines.append(
+                analyze_line(
+                    seq,
+                    text,
+                    words,
+                    audio,
+                    services.aligner,
+                    low_confidence=settings.low_confidence_threshold,
+                    long_pause_ms=settings.long_pause_ms,
+                )
+            )
+        except Exception:
+            log.exception("speech analysis failed for line %d", seq)
+    return lines
 
 
 class _Connection:
@@ -149,6 +192,7 @@ class _Connection:
         self.services.repo.finish_session(session.id, success, reason)
         await self.send(FeedbackPending(session_id=session.id))
         feedback = await asyncio.to_thread(evaluate_session, self.services, session)
+        feedback.speech = await asyncio.to_thread(analyze_speech, self.services, session.id)
         self.services.repo.save_feedback(session.id, feedback)
         await self.send(FeedbackReady(session_id=session.id, source=feedback.source))
 
@@ -246,6 +290,9 @@ class _Connection:
         if len(pcm) % 2 or audio.duration_ms > limit * 1000:
             await self.error("bad_audio", f"Utterances must be 16-bit PCM and under {limit} s.")
             return
+        if rms_dbfs(pcm) < SILENCE_DBFS:
+            await self.error("no_speech", "No words were recognized. Please try again.")
+            return
         if self.services.audio_store is not None:
             self.services.audio_store.save(session.id, msg.seq, pcm, msg.sample_rate)
         try:
@@ -256,7 +303,7 @@ class _Connection:
             log.warning("STT failed: %s", exc)
             await self.error("stt_failed", "Speech recognition failed. Please try again.")
             return
-        if not transcript.text.strip():
+        if not transcript.text.strip() or is_hallucination(transcript):
             await self.error("no_speech", "No words were recognized. Please try again.")
             return
         await self._user_turn(

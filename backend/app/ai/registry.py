@@ -51,8 +51,17 @@ TTS_PROVIDERS: dict[str, Callable[[Settings], TTSAdapter]] = {
     "mock": lambda s: MockTTS(),
     "kokoro": _kokoro,
 }
+
+
+def _wav2vec2(s: Settings) -> AlignerAdapter:
+    from app.ai.alignment.wav2vec2 import Wav2Vec2Aligner  # loads onnxruntime
+
+    return Wav2Vec2Aligner(s.aligner_model_dir, device=s.aligner_device)
+
+
 ALIGNER_PROVIDERS: dict[str, Callable[[Settings], AlignerAdapter]] = {
-    "mock": lambda s: MockAligner()
+    "mock": lambda s: MockAligner(),
+    "wav2vec2": _wav2vec2,
 }
 
 

@@ -27,7 +27,7 @@ def test_wav_round_trip():
 
 def test_audio_store_saves_and_expires(tmp_path):
     store = AudioStore(tmp_path, retention_days=7)
-    path = store.save("s1", 3, b"\x00\x00" * 160, 16000)
+    path = store.save("a" * 32, 3, b"\x00\x00" * 160, 16000)
     assert path.name == "003.wav" and path.is_file()
     assert store.cleanup() == 0
     old = time.time() - 8 * 86400

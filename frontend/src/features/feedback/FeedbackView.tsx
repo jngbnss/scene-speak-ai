@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { fetchFeedback } from "../../services/api";
 import type { Feedback } from "../../types/messages";
+import { SpeechHints } from "../speech/SpeechHints";
 
 interface Props {
   sessionId: string;
@@ -88,7 +89,11 @@ export function FeedbackView({ sessionId, status }: Props) {
           ))}
         </article>
 
-        {feedback.uncertain_spans.length > 0 && (
+        {feedback.speech.length > 0 && (
+          <SpeechHints sessionId={sessionId} lines={feedback.speech} />
+        )}
+
+        {feedback.speech.length === 0 && feedback.uncertain_spans.length > 0 && (
           <article className="card">
             <h3>다시 들어볼 부분</h3>
             {feedback.uncertain_spans.map((u, i) => (

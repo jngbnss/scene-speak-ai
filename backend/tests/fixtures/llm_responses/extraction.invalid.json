@@ -1,0 +1,5 @@
+[
+  {"drink": "latte", "size": null, "temperature": null, "milk": null, "extra_shots": null, "requested_item_not_on_menu": null, "intent": "buy"},
+  {"drink": "latte", "intent": "order"},
+  {"drink": "latte", "size": null, "temperature": null, "milk": null, "extra_shots": "two", "requested_item_not_on_menu": null, "intent": "order"}
+]

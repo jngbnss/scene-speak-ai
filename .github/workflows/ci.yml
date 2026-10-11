@@ -28,6 +28,10 @@ jobs:
         run: ruff format --check .
       - name: Scene files (JSON Schema + cross-references)
         run: python -m app.scenes.validate
+      - name: AI response JSON schemas (fixtures, no models)
+        run: python -m pytest tests/test_llm_schemas.py -q
+      - name: Eval harness compare (sample result files)
+        run: python ../evals/compare.py ../evals/results/20261011-0620-dialogue-baseline.json ../evals/results/20261011-0638-dialogue-after-fixes.json
       - name: pytest (mock adapters only, no model downloads)
         run: python -m pytest
         env:

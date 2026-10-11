@@ -1,0 +1,12 @@
+[
+  {
+    "lines": [
+      {"line": "I want hot latte.", "grammar_ok": false, "corrected": "I want a hot latte.", "error_type": "article", "explanation_ko": "셀 수 있는 명사 앞에는 a가 필요해요.", "more_natural": "Can I get a hot latte?", "reason_ko": "주문할 때 더 공손해요."},
+      {"line": "Large, please.", "grammar_ok": true, "corrected": "", "error_type": "", "explanation_ko": "", "more_natural": "", "reason_ko": ""}
+    ],
+    "recommended_sentences": ["Could I get a large latte with oat milk?"],
+    "review_items": ["I want a hot latte."],
+    "summary": "주문을 끝까지 잘 마쳤어요. 관사 a를 챙겨 보세요."
+  },
+  {"lines": [], "recommended_sentences": [], "review_items": [], "summary": ""}
+]

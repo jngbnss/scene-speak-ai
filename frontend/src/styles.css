@@ -141,3 +141,24 @@ button.link { border: 0; background: none; padding: 2px 4px; color: var(--accent
 mark.uncertain { background: none; color: inherit; text-decoration: underline wavy var(--warn); text-underline-offset: 3px; }
 .timing { margin: 0; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .composer { flex-wrap: wrap; }
+
+/* step 4: listen again, read-aloud practice, report */
+.speech-card { grid-column: 1 / -1; }
+.speech-line { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 0; border-top: 1px solid var(--line); }
+.speech-words { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+.play { width: 28px; height: 28px; padding: 0; border-radius: 50%; font-size: 11px; flex: none; }
+.pause-mark { font-size: 12px; color: var(--warn); font-weight: 600; padding: 0 2px; }
+.segment { text-align: left; font-size: 14px; padding: 4px 10px; border-radius: 8px; max-width: 100%; }
+.segment[aria-pressed="true"], .play[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.sentences li { overflow-wrap: anywhere; }
+.shadow { margin: 6px 0 10px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; gap: 8px; font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; font-size: 15px; background: var(--bg); }
+.shadow-target { margin: 0; font-weight: 600; }
+.shadow-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.shadow-result p { margin: 0 0 4px; }
+.shadow-words { display: flex; flex-wrap: wrap; gap: 4px; }
+.sw { padding: 1px 6px; border-radius: 6px; }
+.sw-ok { background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.sw-missing { background: color-mix(in srgb, var(--bad) 16%, transparent); text-decoration: line-through; text-decoration-color: var(--bad); }
+.sw-extra { background: color-mix(in srgb, var(--warn) 18%, transparent); }
+.sw-unclear { text-decoration: underline wavy var(--warn); text-underline-offset: 3px; }
+.sw small { font-size: 11px; color: var(--muted); }

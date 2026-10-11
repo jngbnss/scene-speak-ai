@@ -163,3 +163,24 @@
 - 근거: onnxruntime-web은 `/vad/ort-wasm-simd-threaded.mjs`를 동적 `import()`로 불러오는데, Vite 개발 서버는 `public/` 파일의 모듈 import를 500으로 거부해 `npm run dev`에서만 마이크가 동작하지 않았다(빌드 결과물은 정상). Chrome 가짜 마이크 테스트에서 발견했다.
 - 상태: 채택
 
+
+## D-027 정렬기는 WhisperX·torch 대신 wav2vec2 ONNX + 직접 구현한 CTC 강제 정렬
+- 날짜: 2026-10-11
+- 결정: 대화 후 단어 정렬은 `facebook/wav2vec2-base-960h`의 ONNX 변환(Xenova, 리비전 고정)을 onnxruntime으로 돌리고, CTC 강제 정렬(torchaudio `forced_align`과 같은 비터비 알고리즘)은 numpy로 구현한다(`app/ai/alignment/ctc.py`). 기본 실행 장치는 CPU다. 정렬이 실패하면 Whisper 단어 타임스탬프로 대신한다.
+- 근거: WhisperX나 torchaudio를 쓰려면 torch(CUDA 포함 약 2.5GB)를 추가로 설치해야 한다. onnxruntime은 Kokoro 때문에 이미 설치돼 있다. 정렬은 세션이 끝난 뒤에만 돌아서 CPU로 충분하다(합성 음성 3.7초 문장 기준 약 0.2초). GPU는 실시간 모델(Qwen3, Whisper, Kokoro)이 이미 VRAM 7.7GB를 쓰고 있어 비워 둔다. 1.2~1.5초 무음을 끼워 넣은 합성 음성에서 멈춤 위치와 길이를 정확히 찾았다(`pytest -m model`).
+- 한계: 영어 문자 단위 모델이라 숫자는 단어로 바꿔 정렬하고, 기호만 있는 단어는 건너뛴다. 한국인 발화에서의 정렬 정확도는 아직 측정하지 않았다.
+- 상태: 채택
+
+## D-028 무음과 Whisper 환각을 서버에서도 거른다
+- 날짜: 2026-10-11
+- 결정: 음성 크기가 -55 dBFS보다 작으면 인식기에 보내지 않고 `no_speech`로 답한다. 인식 결과가 "you", "thank you" 같은 흔한 환각 문장이면서 평균 단어 신뢰도가 0.5 미만이면 버린다.
+- 근거: 단계 3 남은 문제. 브라우저 VAD가 무음을 거르지만, 다른 클라이언트나 VAD 오작동에서 무음이 들어오면 Whisper가 "You"를 만들어 내고 대화 턴으로 처리됐다.
+- 상태: 채택
+
+## D-029 Kokoro TTS의 espeak-ng(GPL-3.0) 의존성
+- 날짜: 2026-10-11
+- 확인: kokoro-onnx 0.4.7은 텍스트를 발음기호로 바꿀 때 `phonemizer-fork` 3.3.1(GPL-3.0-or-later)을 import하고, `espeakng-loader` 0.2.4가 동봉한 espeak-ng DLL(GPL-3.0-or-later)을 같은 프로세스에서 불러온다(`kokoro_onnx/tokenizer.py`). 설계 위험 7번이 실제로 해당된다.
+- 영향: 저장소와 GitHub Pages 빌드에는 이 파일들이 들어가지 않는다. 사용자가 직접 설치하고, 서버로 서비스만 하는 경우 GPL-3.0(AGPL 아님)의 소스 공개 의무는 생기지 않는다. 그러나 `.venv`나 Docker 이미지처럼 espeak-ng가 들어간 설치본을 배포하면 GPL 조건을 따라야 한다. 같은 프로세스에서 import하므로 앱 전체가 GPL과 호환돼야 한다는 해석도 있다.
+- 결정: MVP는 현 구성을 유지한다. TTS는 어댑터 뒤에 있고 선택 설치(`requirements-ai.txt`)이며, 없어도 앱이 동작한다(D-024). `docs/licenses.md`와 `THIRD_PARTY_NOTICES.md`에 명시한다.
+- 배포 전 대안: (1) TTS를 별도 프로세스(HTTP 서비스)로 분리해 GPL 구성요소와 앱을 독립 프로그램으로 둔다. (2) espeak-ng 없이 사전 기반 G2P(예: misaki의 영어 사전, Apache-2.0)만 쓰고 사전에 없는 단어는 철자 규칙으로 처리한다. 장면 어휘가 정해져 있어 가능성이 높다. (3) 저장소를 GPL-3.0으로 공개한다. 저장소 라이선스를 정할 때 함께 결정한다.
+- 상태: 확인 완료, 배포 형태 결정 시 재검토

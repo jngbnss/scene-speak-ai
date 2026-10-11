@@ -94,6 +94,23 @@ class Repository:
                 for r in rows
             ]
 
+    def spoken_lines(self, session_id: str) -> list[tuple[int, str, list[WordInfo]]]:
+        """User lines as recognized (before any correction), for lining up with the audio."""
+        with self._sessions() as db:
+            rows = db.scalars(
+                select(Utterance)
+                .where(
+                    Utterance.session_id == session_id,
+                    Utterance.speaker == "user",
+                    Utterance.asr_text.is_not(None),
+                )
+                .order_by(Utterance.seq)
+            ).all()
+            return [
+                (r.seq, r.asr_text or "", [WordInfo(**w) for w in json.loads(r.words_json or "[]")])
+                for r in rows
+            ]
+
     def transcript(self, session_id: str) -> list[tuple[str, str]]:
         with self._sessions() as db:
             rows = db.scalars(

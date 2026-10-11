@@ -66,6 +66,32 @@ export type ServerMessage =
   | { type: "feedback_ready"; session_id: string; source: string }
   | { type: "error"; code: string; message: string; recoverable: boolean };
 
+// Post-session timing hints for one spoken line (backend/app/evaluation/speech.py)
+export interface SpeechWord {
+  word: string;
+  start: number;
+  end: number;
+  pause_before_ms: number;
+  uncertain: boolean;
+}
+
+export interface ListenSegment {
+  start: number;
+  end: number;
+  reasons: ("pause" | "uncertain")[];
+  text: string;
+}
+
+export interface LineSpeech {
+  utterance_seq: number;
+  text: string;
+  duration_s: number;
+  words: SpeechWord[];
+  long_pauses_ms: number[];
+  segments: ListenSegment[];
+  timing_source: string;
+}
+
 // REST: GET /api/sessions/{id}/feedback (backend/app/evaluation/schema.py)
 export interface Feedback {
   task_success: boolean;
@@ -82,6 +108,7 @@ export interface Feedback {
     start: number | null;
     end: number | null;
   }[];
+  speech: LineSpeech[];
   source: "llm" | "llm_retry" | "default";
   model_id: string | null;
 }
@@ -97,4 +124,24 @@ export interface ReviewData {
     count: number;
     examples: { original: string; corrected: string }[];
   }[];
+}
+
+// REST: POST /api/shadowing (backend/app/evaluation/shadowing.py)
+export interface ShadowResult {
+  reference: string;
+  heard: string;
+  words: { word: string; status: "ok" | "missing" | "extra" | "unclear" }[];
+  missing: string[];
+  extra: string[];
+  matched_ratio: number;
+  speech: LineSpeech | null;
+}
+
+// REST: GET /api/reports
+export interface ReportEntry {
+  name: string;
+  label: string | null;
+  kind: string;
+  created_at: string | null;
+  git_commit: string | null;
 }

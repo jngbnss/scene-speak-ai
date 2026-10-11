@@ -296,3 +296,149 @@ def test_audio_without_stt_configured(ws):
         {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
     )
     assert _until(ws, "error")["code"] == "stt_unavailable"
+
+
+class SequenceSTT:
+    """Returns the given lines in order, with low confidence on words listed in ``unsure``."""
+
+    model_id = "seq-stt"
+
+    def __init__(self, lines: list[str], unsure: frozenset[str] = frozenset()) -> None:
+        self.lines = list(lines)
+        self.unsure = unsure
+
+    def transcribe(self, audio, *, hotwords=None):
+        from app.ai.types import Transcript, WordInfo
+
+        text = self.lines.pop(0)
+        tokens = text.split()
+        step = audio.duration_ms / 1000 / len(tokens)
+        words = [
+            WordInfo(
+                word=w,
+                start=round(i * step, 3),
+                end=round((i + 1) * step, 3),
+                confidence=0.3 if w.strip(".,?") in self.unsure else 0.95,
+            )
+            for i, w in enumerate(tokens)
+        ]
+        return Transcript(
+            text=text,
+            words=words,
+            language="en",
+            audio_duration_ms=audio.duration_ms,
+            latency_ms=1,
+            model_id=self.model_id,
+        )
+
+
+def test_spoken_session_gets_replay_segments_and_serves_recordings(ws, voice):
+    lines = ["I want hot latte.", "Large, please. And can I have oat milk?", "Yes, that's all."]
+    voice.stt = SequenceSTT(lines, unsure=frozenset({"oat"}))
+    ws.send_json({"type": "session_start"})
+    started = _until(ws, "session_started")
+    _until(ws, "scene_state")
+    for seq in range(1, 4):
+        ws.send_json(
+            {
+                "type": "audio_utterance",
+                "seq": seq,
+                "sample_rate": 16000,
+                "pcm16_base64": _pcm_b64(2),
+            }
+        )
+        _until(ws, "scene_state")
+    ready = _until(ws, "feedback_ready")
+    sid = ready["session_id"]
+    with TestClient(app) as client:
+        fb = client.get(f"/api/sessions/{sid}/feedback").json()
+        wav = client.get(f"/api/sessions/{sid}/utterances/2/audio")
+        assert client.get(f"/api/sessions/{sid}/utterances/9/audio").status_code == 404
+        assert client.get("/api/sessions/..%2F..%2Fx/utterances/1/audio").status_code == 404
+    assert sid == started["session_id"]
+    assert [s["utterance_seq"] for s in fb["speech"]] == [1, 2, 3]
+    oat_line = fb["speech"][1]
+    assert [w["word"] for w in oat_line["words"] if w["uncertain"]] == ["oat"]
+    assert oat_line["segments"][0]["reasons"] == ["uncertain"]
+    assert "oat" in oat_line["segments"][0]["text"]
+    assert wav.status_code == 200 and wav.headers["content-type"] == "audio/wav"
+    assert wav.content[:4] == b"RIFF"
+
+
+def test_typed_session_has_no_speech_hints(ws, voice):
+    _finish_order(ws)
+    sid = _until(ws, "feedback_ready")["session_id"]
+    with TestClient(app) as client:
+        assert client.get(f"/api/sessions/{sid}/feedback").json()["speech"] == []
+
+
+def test_near_silent_audio_is_not_sent_to_the_recognizer(ws, voice):
+    import base64
+
+    class MustNotRun:
+        def transcribe(self, audio, *, hotwords=None):
+            raise AssertionError("silence reached STT")
+
+    voice.stt = MustNotRun()
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    silence = base64.b64encode(b"\x00\x00" * 16000).decode()
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": silence}
+    )
+    assert _until(ws, "error")["code"] == "no_speech"
+
+
+def test_unsure_you_is_treated_as_no_speech(ws, voice):
+    voice.stt = SequenceSTT(["You"], unsure=frozenset({"You"}))
+    ws.send_json({"type": "session_start"})
+    _until(ws, "scene_state")
+    ws.send_json(
+        {"type": "audio_utterance", "seq": 1, "sample_rate": 16000, "pcm16_base64": _pcm_b64()}
+    )
+    assert _until(ws, "error")["code"] == "no_speech"
+
+
+def test_shadowing_with_text_and_with_audio(voice):
+    voice.stt = SequenceSTT(["Can I get large latte"])
+    with TestClient(app) as client:
+        typed = client.post(
+            "/api/shadowing",
+            json={"reference": "Can I get a large latte?", "text": "Can I get a large latte"},
+        ).json()
+        spoken = client.post(
+            "/api/shadowing",
+            json={"reference": "Can I get a large latte?", "pcm16_base64": _pcm_b64(2)},
+        ).json()
+        assert client.post("/api/shadowing", json={"reference": "Hi"}).status_code == 422
+    assert typed["missing"] == [] and typed["matched_ratio"] == 1.0
+    assert spoken["heard"] == "Can I get large latte"
+    assert spoken["missing"] == ["a"]
+    assert spoken["speech"]["words"][0]["word"] == "Can"
+
+
+def test_shadowing_audio_needs_stt():
+    with TestClient(app) as client:
+        res = client.post("/api/shadowing", json={"reference": "Hi", "pcm16_base64": _pcm_b64()})
+    assert res.status_code == 503
+
+
+def test_reports_are_listed_and_served(services, tmp_path):
+    import json
+
+    services.settings.eval_results_dir = tmp_path
+    (tmp_path / "20261011-0900-suite-a.json").write_text(
+        json.dumps({"kind": "suite", "label": "a", "created_at": "2026-10-11T09:00:00"})
+    )
+    (tmp_path / "20261011-0800-asr-b.json").write_text(json.dumps({"label": "b"}))
+    (tmp_path / "broken.json").write_text("{")
+    with TestClient(app) as client:
+        listed = client.get("/api/reports").json()
+        one = client.get("/api/reports/20261011-0800-asr-b.json").json()
+        assert client.get("/api/reports/..%5Csecret.json").status_code == 404
+        assert client.get("/api/reports/missing.json").status_code == 404
+    assert [(r["name"], r["kind"]) for r in listed] == [
+        ("20261011-0900-suite-a.json", "suite"),
+        ("20261011-0800-asr-b.json", "asr"),
+    ]
+    assert one["label"] == "b"
