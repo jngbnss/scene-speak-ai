@@ -3,7 +3,7 @@
 3D로 만든 뉴욕 거리를 걸어 다니며 카페 바리스타, 핫도그 노점상, 경찰관, 호텔 직원, 지하철 역무원의 미션을 해결하고, 길에서 만난 사람 누구와도 영어로 수다를 떠는 여행 영어회화 서비스입니다. 정해진 문장을 따라 읽지 않고 자유롭게 말하면, 장면 규칙이 대화를 이끌고 대화가 끝나면 피드백과 다시 들어볼 구간을 보여줍니다.
 
 - 설계: [docs/design.md](docs/design.md)
-- 구현 계획과 진행 상황: [docs/implementation-plan.md](docs/implementation-plan.md)
+- 구현 계획과 진행 상황: [docs/implementation-plan.md](docs/implementation-plan.md) · 정리와 할 일: [docs/TODO.md](docs/TODO.md)
 - 결정 기록: [docs/decision-log.md](docs/decision-log.md)
 - 아키텍처: [docs/architecture.md](docs/architecture.md) · 모델 선택: [docs/model-selection.md](docs/model-selection.md) · 실험: [docs/experiments.md](docs/experiments.md)
 - 라이선스: [docs/licenses.md](docs/licenses.md), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
