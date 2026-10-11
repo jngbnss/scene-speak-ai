@@ -1,0 +1,78 @@
+{
+  "label": "dialogue-npc-checks-port",
+  "created_at": "2026-10-11T12:44:26",
+  "git_commit": "fb1b001",
+  "provider": "ollama",
+  "model_id": "ollama:qwen3:8b",
+  "cases": 21,
+  "npc_replies": 78,
+  "metrics": {
+    "scene_deviation_rate": 0.09,
+    "menu_hallucination_rate": 0.0,
+    "retry_rate": 0.09,
+    "template_fallback_rate": 0.051,
+    "final_guard_pass_rate": 1.0,
+    "action_accuracy": 1.0,
+    "latency_ms_mean": 543,
+    "latency_ms_p50": 448,
+    "latency_ms_p95": 888
+  },
+  "violation_samples": [
+    {
+      "case": "normal-three-turns",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "Got it! What size would you like?"
+    },
+    {
+      "case": "cold-brew-hot-then-iced",
+      "action": "confirm_order",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "So that's a medium cold brew. Is that everything?"
+    },
+    {
+      "case": "americano-with-milk",
+      "action": "confirm_order",
+      "violations": [
+        "order recap does not name the drink"
+      ],
+      "final": "So that's a medium iced Americano. Is that everything?"
+    },
+    {
+      "case": "cancel-mid-order",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "What size would you like? We have small, medium, or large."
+    },
+    {
+      "case": "korean-input",
+      "action": "clarify",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "Latte coming up! Size, milk, and extra shots?"
+    },
+    {
+      "case": "turn-limit",
+      "action": "clarify",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "final": "What can I get you started with? We have lattes, Americanos, cold brew, and hot chocolate."
+    },
+    {
+      "case": "turn-limit",
+      "action": "end_unfinished",
+      "violations": [
+        "question after end"
+      ],
+      "final": "Sorry, I need to help the next customer. Feel free to order again anytime!"
+    }
+  ]
+}

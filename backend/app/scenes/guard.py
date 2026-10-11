@@ -37,6 +37,7 @@ class OutputGuard:
             if item not in allowed:
                 violations.append(f"off-menu item: {item}")
         for pattern in self._forbidden:
-            if pattern.search(text):
-                violations.append(f"forbidden pattern: {pattern.pattern}")
+            found = pattern.search(text)
+            if found:
+                violations.append(f"forbidden pattern: {pattern.pattern} ({found.group(0)})")
         return GuardResult(ok=not violations, violations=violations)

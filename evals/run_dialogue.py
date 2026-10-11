@@ -43,13 +43,15 @@ def percentile(values: list[int], q: float) -> int:
     return ordered[min(len(ordered) - 1, round(q * (len(ordered) - 1)))]
 
 
-def run(provider: str, cases_path: Path, limit: int | None) -> dict:
+def run(provider: str, cases_path: Path, limit: int | None, only: list[str] | None) -> dict:
     settings = Settings(llm_provider=provider)
     llm = get_llm(settings)
     cases = [
         json.loads(x) for x in cases_path.read_text(encoding="utf-8").splitlines() if x.strip()
     ]
     cases = cases[:limit] if limit else cases
+    if only:
+        cases = [c for c in cases if c["id"] in only]
 
     replies, expected, matched, samples = [], 0, 0, []
     for case in cases:
@@ -67,6 +69,7 @@ def run(provider: str, cases_path: Path, limit: int | None) -> dict:
                         "case": case["id"],
                         "action": result.turn.action,
                         "violations": result.reply.first_violations,
+                        "rejected": result.reply.first_text,
                         "final": result.reply.text,
                     }
                 )
@@ -108,10 +111,11 @@ def main() -> None:
     parser.add_argument("--label", default="run")
     parser.add_argument("--cases", type=Path, default=ROOT / "evals" / "dialogue-cases.jsonl")
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--only", nargs="*", help="case ids to run")
     parser.add_argument("--out", type=Path, default=ROOT / "evals" / "results")
     args = parser.parse_args()
 
-    report = run(args.provider, args.cases, args.limit)
+    report = run(args.provider, args.cases, args.limit, args.only)
     report["label"] = args.label
     args.out.mkdir(parents=True, exist_ok=True)
     path = args.out / f"{datetime.now():%Y%m%d-%H%M}-dialogue-{args.label}.json"

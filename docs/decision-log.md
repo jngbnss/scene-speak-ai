@@ -138,3 +138,28 @@
 - 날짜: 2026-10-11
 - 결정: `@ricky0123/vad-web` 0.0.30(Silero v5)의 모델·AudioWorklet·onnxruntime wasm을 빌드 전에 `public/vad/`로 복사해 직접 서빙한다(CDN 의존 없음, GitHub Pages에서도 동작). NPC 음성이 재생 중이거나 응답을 기다리는 동안에는 VAD를 일시정지해 NPC 목소리가 녹음되지 않게 한다.
 - 상태: 채택
+
+## D-023 가상환경 cuDNN을 ctranslate2와 같은 9.10으로 맞춤
+- 날짜: 2026-10-11
+- 결정: `requirements-gpu.txt`의 `nvidia-cudnn-cu12`를 9.1.0.70에서 9.10.2.21로 올린다.
+- 근거: ctranslate2 4.8.2(faster-whisper)는 `cudnn64_9.dll`(9.10.2)만 자체 포함하고, 나머지 cuDNN 하위 DLL은 검색 경로에서 찾는다. 가상환경의 9.1 하위 DLL이 잡히면 `Could not load symbol cudnnGetLibConfig`로 프로세스가 종료됐다. 서버는 Kokoro(onnxruntime) 세션을 Whisper 첫 추론보다 먼저 만들기 때문에 서버에서만 재현됐고, `pytest -m model`은 통과했다. 9.10.2에서 서버 워밍업, 모델 테스트, Kokoro CUDA 실행을 모두 확인했다.
+- 상태: 채택
+
+## D-024 음성 모델을 불러오지 못하면 앱 대신 음성만 끈다
+- 날짜: 2026-10-11
+- 결정: STT/TTS 어댑터 생성이 `AdapterError`, `ImportError`, `OSError`로 실패하면 경고를 남기고 `None`으로 둔다. TTS가 없으면 NPC는 텍스트로만 답하고, STT가 없으면 사용자는 타이핑한다.
+- 근거: Kokoro 모델 파일이 없으면 서버가 아예 시작하지 못했다. 설계의 "TTS를 꺼도 대화 지속"을 시작 시점까지 확장한다.
+- 상태: 채택
+
+## D-025 NPC 대사 검증 보강
+- 날짜: 2026-10-11
+- 결정: (1) 주문을 다시 말하는 대사(`confirm_order`, `close`)가 Director 상태와 다르면 거부한다. (2) 장면 금지 패턴에 역할 혼동("can I get a …")을 추가한다. (3) 재생성 요청은 위반별로 고칠 점을 구체적으로 주고 temperature를 0.6에서 0.9로 올린다. 평가 결과에 거부된 첫 대사도 남긴다.
+- 근거: 같은 단계 2를 따로 구현해 본 별도 실험(로컬 브랜치)의 측정에서, 막연한 재생성 요청에는 모델이 같은 문장을 그대로 돌려줬고, 바리스타가 손님처럼 주문하는 대사가 가드를 통과했다. 이식 후 재측정에서 주문 복창 검사가 실제 오류("medium iced Americano with oat milk" — 우유를 뺀 주문)를 잡았다.
+- 상태: 채택
+
+## D-026 개발 서버에서 VAD 자산을 정적 파일로 서빙
+- 날짜: 2026-10-11
+- 결정: D-022를 보완해, Vite 개발 서버 플러그인이 `/vad/*`를 모듈 변환 없이 그대로 서빙한다.
+- 근거: onnxruntime-web은 `/vad/ort-wasm-simd-threaded.mjs`를 동적 `import()`로 불러오는데, Vite 개발 서버는 `public/` 파일의 모듈 import를 500으로 거부해 `npm run dev`에서만 마이크가 동작하지 않았다(빌드 결과물은 정상). Chrome 가짜 마이크 테스트에서 발견했다.
+- 상태: 채택
+

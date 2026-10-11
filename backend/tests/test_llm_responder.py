@@ -103,3 +103,59 @@ def test_closing_line_must_not_ask_a_question(scene, guard):
     reply = LLMResponder(scene, guard, llm).reply(turn, [])
     assert reply.source == "llm_retry"
     assert reply.first_violations == ["question after end"]
+
+
+class RecordingLLM(MockLLM):
+    """MockLLM that also records the temperature of each call."""
+
+    def __init__(self, responses):
+        super().__init__(responses)
+        self.temperatures: list[float] = []
+
+    def generate(self, messages, **kwargs):
+        self.temperatures.append(kwargs.get("temperature", 0.6))
+        return super().generate(messages, **kwargs)
+
+
+def _confirm_turn(scene):
+    d = Director(scene)
+    d.start()
+    d.state.options_offered = True
+    turn = d.handle("A large hot latte, please.")
+    assert turn.action == "confirm_order"
+    return turn
+
+
+def test_order_recap_must_match_the_director_state(scene, guard):
+    llm = MockLLM(
+        [
+            {"reply": "So a medium iced latte. Is that everything?"},
+            {"reply": "So a large hot latte. Is that everything?"},
+        ]
+    )
+    reply = LLMResponder(scene, guard, llm).reply(_confirm_turn(scene), [])
+    assert reply.source == "llm_retry"
+    assert "order recap says size=medium, order has large" in reply.first_violations
+    assert "Say the order exactly as: a large hot latte." in llm.calls[1][-1].content
+
+
+def test_retry_names_the_fix_and_raises_temperature(scene, guard):
+    llm = RecordingLLM(
+        [
+            {"reply": "Hello! Welcome to our café. What size would you like?"},
+            {"reply": "Hi! What size would you like?"},
+        ]
+    )
+    reply = LLMResponder(scene, guard, llm).reply(_turn(scene), [])
+    assert reply.source == "llm_retry"
+    assert "Use at most 2 sentences" in llm.calls[1][-1].content
+    assert llm.temperatures == [0.6, 0.9]
+
+
+def test_barista_ordering_like_a_customer_is_rejected(scene, guard):
+    llm = MockLLM(
+        [{"reply": "Sorry, can I get a latte?"}, {"reply": "Sorry, what would you like?"}]
+    )
+    reply = LLMResponder(scene, guard, llm).reply(_turn(scene, "What's the weather like?"), [])
+    assert reply.source == "llm_retry"
+    assert 'Do not say "can I get a"' in llm.calls[1][-1].content

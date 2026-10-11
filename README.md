@@ -12,7 +12,7 @@
 
 - 텍스트로 주문하면 Scene Director가 주문 상태를 관리하고, Qwen3-8B(Ollama)가 Director가 정한 행동을 대사로 표현합니다. 출력 가드에 두 번 걸리면 장면 YAML의 템플릿 문장을 씁니다.
 - 대화가 끝나면 Learning Evaluator가 문법·표현 피드백과 복습 문장을 만들고, 닉네임별로 SQLite에 저장합니다.
-- 단계 3(음성) 코드는 들어가 있지만 실제 모델로 서버 전체를 검증하는 일은 남아 있습니다(`docs/implementation-plan.md`). 기본값은 Mock이고, 아래 "음성 준비"를 따르면 마이크로 말하고 NPC 음성을 들을 수 있습니다.
+- 단계 3(음성 입력·출력)까지 실제 모델로 서버 전체를 검증했습니다(`docs/implementation-plan.md`). 기본값은 Mock이고, 아래 "음성 준비"를 따르면 마이크로 말하고 NPC 음성을 들을 수 있습니다.
 
 ## 실행 방법
 
@@ -41,6 +41,12 @@ curl.exe -L -o ..\models\kokoro\voices-v1.0.bin https://github.com/thewh1teagle/
 ```
 
 `.env`에 `STT_PROVIDER=faster_whisper`, `TTS_PROVIDER=kokoro`를 넣습니다. Whisper `small.en` 모델(약 0.5GB)은 처음 실행할 때 자동으로 받습니다. 서버를 켤 때 세 모델을 미리 올리므로 처음에는 1~2분 걸립니다. 필요한 자원은 VRAM 약 7.7GB(Qwen3 포함), 디스크 약 5GB입니다.
+
+음성 확인된 환경: RTX 4060 8GB, Windows 11. 서버 기준 한 턴(인식 → NPC 대사 → NPC 음성)에 약 1초가 걸립니다.
+
+- 프론트는 반드시 `npm run dev`로 띄우세요. 마이크용 VAD 파일을 `public/vad/`로 복사하는 단계가 `predev`에 있어서, `npx vite`로 직접 띄우면 마이크가 동작하지 않습니다.
+- 모델 파일이 없거나 GPU 라이브러리를 불러오지 못하면 서버는 꺼지지 않고 그 기능만 끕니다(로그에 `TTS disabled` 등). 이때 NPC는 글로만 답하고, 사용자는 타이핑으로 대화할 수 있습니다.
+- `Could not load symbol cudnnGetLibConfig`로 서버가 종료되면 cuDNN 버전이 섞인 것입니다. `uv pip install --python .venv\Scripts\python.exe -r requirements-gpu.txt`로 cuDNN 9.10을 다시 설치하세요 (D-023).
 
 Windows에서 스마트 앱 컨트롤이 PyAV DLL을 막아도 동작합니다(파일 디코딩만 꺼짐). 다른 프로젝트가 8000/5173 포트를 쓰고 있다면 백엔드는 `--port 8010`, 프론트는 `$env:BACKEND_PORT=8010; $env:FRONTEND_PORT=5183; npm run dev`로 띄웁니다.
 

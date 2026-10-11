@@ -1,0 +1,58 @@
+{
+  "label": "probe",
+  "created_at": "2026-10-11T12:45:28",
+  "git_commit": "fb1b001",
+  "provider": "ollama",
+  "model_id": "ollama:qwen3:8b",
+  "cases": 7,
+  "npc_replies": 36,
+  "metrics": {
+    "scene_deviation_rate": 0.111,
+    "menu_hallucination_rate": 0.0,
+    "retry_rate": 0.111,
+    "template_fallback_rate": 0.083,
+    "final_guard_pass_rate": 1.0,
+    "action_accuracy": 1.0,
+    "latency_ms_mean": 480,
+    "latency_ms_p50": 415,
+    "latency_ms_p95": 898
+  },
+  "violation_samples": [
+    {
+      "case": "normal-three-turns",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "rejected": "Got it! What size would you like? Small, medium, or large?",
+      "final": "Got it! What size would you like?"
+    },
+    {
+      "case": "americano-with-milk",
+      "action": "confirm_order",
+      "violations": [
+        "order recap says milk=oat, order has none"
+      ],
+      "rejected": "Your medium iced Americano with oat milk. Is that everything?",
+      "final": "So that's a medium iced Americano. Is that everything?"
+    },
+    {
+      "case": "cancel-mid-order",
+      "action": "ask_size",
+      "violations": [
+        "more than 2 sentences"
+      ],
+      "rejected": "Great! What size would you like? Small, medium, or large?",
+      "final": "What size would you like? We have small, medium, or large."
+    },
+    {
+      "case": "turn-limit",
+      "action": "end_unfinished",
+      "violations": [
+        "question after end"
+      ],
+      "rejected": "Sure! What would you like to order?",
+      "final": "Sorry, I need to help the next customer. Feel free to order again anytime!"
+    }
+  ]
+}

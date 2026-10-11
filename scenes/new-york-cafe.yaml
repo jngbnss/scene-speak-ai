@@ -176,6 +176,8 @@ guard:
     - "\\$\\s?\\d"
     - "\\bdollars?\\b"
     - "\\bgrammar\\b"
+    # Role confusion: the barista ordering like a customer. "What can I get you?" is fine.
+    - "\\b(can|could|may) i (get|have) (a|an)\\b"
 
 success_condition:
   all_required_slots_filled: true

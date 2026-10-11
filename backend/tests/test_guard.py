@@ -46,3 +46,9 @@ def test_count_sentences():
 )
 def test_ordinary_barista_phrasing_passes(guard, text):
     assert guard.check(text).ok, guard.check(text).violations
+
+
+def test_role_confusion_is_caught_but_barista_questions_pass(guard):
+    assert not guard.check("Sorry, can I get a latte or an Americano?").ok
+    assert guard.check("Hi! What can I get you today?").ok
+    assert guard.check("What can I get for you?").ok
