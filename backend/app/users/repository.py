@@ -5,6 +5,7 @@ import re
 from collections import Counter
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.ai.types import WordInfo
@@ -32,13 +33,18 @@ class Repository:
         nickname = nickname.strip() or "guest"
         if not _NICKNAME_RE.match(nickname):
             raise ValueError("Nickname may contain letters, numbers, spaces, - and _ (max 40).")
-        with self._sessions.begin() as db:
-            user = db.scalar(select(User).where(User.nickname == nickname))
-            if user is None:
-                user = User(nickname=nickname)
-                db.add(user)
-                db.flush()
-            return user.id
+        try:
+            with self._sessions.begin() as db:
+                user = db.scalar(select(User).where(User.nickname == nickname))
+                if user is None:
+                    user = User(nickname=nickname)
+                    db.add(user)
+                    db.flush()
+                return user.id
+        except IntegrityError:
+            # Two requests created the same nickname at once (page login + session start).
+            with self._sessions() as db:
+                return db.scalar(select(User.id).where(User.nickname == nickname))
 
     def create_session(self, session_id: str, user_id: int, scene_id: str) -> None:
         with self._sessions.begin() as db:

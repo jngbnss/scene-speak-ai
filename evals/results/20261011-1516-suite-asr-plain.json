@@ -1,0 +1,711 @@
+{
+  "kind": "suite",
+  "label": "asr-plain",
+  "note": "음성인식 문맥 힌트 없음",
+  "created_at": "2026-10-11T15:16:41",
+  "git_commit": "9a9097b",
+  "git_dirty": false,
+  "config": {
+    "llm_provider": "ollama",
+    "asr_model": "small.en",
+    "asr_context": "none",
+    "sections": [
+      "dialogue",
+      "feedback",
+      "asr"
+    ]
+  },
+  "models": {
+    "dialogue": "ollama:qwen3:8b",
+    "feedback": "ollama:qwen3:8b",
+    "asr": "faster-whisper:small.en:cuda:int8_float16"
+  },
+  "durations_s": {
+    "dialogue": 88.4,
+    "feedback": 100.5,
+    "asr": 64.5
+  },
+  "metrics": {
+    "dialogue.scene_deviation_rate": 0.108,
+    "dialogue.menu_hallucination_rate": 0.0,
+    "dialogue.retry_rate": 0.108,
+    "dialogue.template_fallback_rate": 0.084,
+    "dialogue.final_guard_pass_rate": 1.0,
+    "dialogue.action_accuracy": 1.0,
+    "dialogue.latency_ms_mean": 785,
+    "dialogue.latency_ms_p50": 671,
+    "dialogue.latency_ms_p95": 1520,
+    "feedback.precision": 0.875,
+    "feedback.recall": 1.0,
+    "feedback.f1": 0.933,
+    "feedback.false_feedback_rate": 0.125,
+    "feedback.tp": 7,
+    "feedback.fp": 1,
+    "feedback.fn": 0,
+    "asr.n": 240,
+    "asr.wer": 0.0525,
+    "asr.slot_accuracy": 0.8917,
+    "asr.latency_ms_p50": 220,
+    "asr.latency_ms_p95": 342,
+    "asr.rtf_mean": 0.121
+  },
+  "metric_info": {
+    "dialogue.scene_deviation_rate": {
+      "better": "lower",
+      "label": "NPC 장면 이탈률"
+    },
+    "dialogue.menu_hallucination_rate": {
+      "better": "lower",
+      "label": "NPC 메뉴 환각률"
+    },
+    "dialogue.retry_rate": {
+      "better": "lower",
+      "label": "NPC 재생성률"
+    },
+    "dialogue.template_fallback_rate": {
+      "better": "lower",
+      "label": "NPC 템플릿 대체율"
+    },
+    "dialogue.final_guard_pass_rate": {
+      "better": "higher",
+      "label": "최종 가드 통과율"
+    },
+    "dialogue.action_accuracy": {
+      "better": "higher",
+      "label": "Director 행동 정확도"
+    },
+    "dialogue.latency_ms_mean": {
+      "better": "lower",
+      "label": "NPC 응답 평균 (ms)"
+    },
+    "dialogue.latency_ms_p50": {
+      "better": "lower",
+      "label": "NPC 응답 p50 (ms)"
+    },
+    "dialogue.latency_ms_p95": {
+      "better": "lower",
+      "label": "NPC 응답 p95 (ms)"
+    },
+    "feedback.precision": {
+      "better": "higher",
+      "label": "피드백 정밀도"
+    },
+    "feedback.recall": {
+      "better": "higher",
+      "label": "피드백 재현율"
+    },
+    "feedback.f1": {
+      "better": "higher",
+      "label": "피드백 F1"
+    },
+    "feedback.false_feedback_rate": {
+      "better": "lower",
+      "label": "잘못된 지적 비율"
+    },
+    "asr.n": {
+      "label": "음성 파일 수"
+    },
+    "asr.wer": {
+      "better": "lower",
+      "label": "음성인식 WER"
+    },
+    "asr.slot_accuracy": {
+      "better": "higher",
+      "label": "주문 정보 인식률"
+    },
+    "asr.latency_ms_p50": {
+      "better": "lower",
+      "label": "음성인식 p50 (ms)"
+    },
+    "asr.latency_ms_p95": {
+      "better": "lower",
+      "label": "음성인식 p95 (ms)"
+    },
+    "asr.rtf_mean": {
+      "better": "lower",
+      "label": "음성인식 RTF"
+    }
+  },
+  "sections": {
+    "dialogue": {
+      "model_id": "ollama:qwen3:8b",
+      "cases": 22,
+      "npc_replies": 83,
+      "metrics": {
+        "scene_deviation_rate": 0.108,
+        "menu_hallucination_rate": 0.0,
+        "retry_rate": 0.108,
+        "template_fallback_rate": 0.084,
+        "final_guard_pass_rate": 1.0,
+        "action_accuracy": 1.0,
+        "latency_ms_mean": 785,
+        "latency_ms_p50": 671,
+        "latency_ms_p95": 1520
+      },
+      "violation_samples": [
+        {
+          "case": "normal-three-turns",
+          "action": "ask_size",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Sure! What size would you like? Small, medium, or large?",
+          "final": "What size would you like? We have small, medium, or large."
+        },
+        {
+          "case": "cold-brew-hot-then-iced",
+          "action": "offer_options",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Great! Iced cold brew, medium. Need milk or extra shot?",
+          "final": "Iced cold brew, medium. Want milk or extra shot?"
+        },
+        {
+          "case": "cold-brew-hot-then-iced",
+          "action": "confirm_order",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Your order: iced cold brew, medium. No milk or shots. Ready when you are!",
+          "final": "So that's a medium cold brew. Is that everything?"
+        },
+        {
+          "case": "cancel-mid-order",
+          "action": "ask_size",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Great! What size would you like? Small, medium, or large?",
+          "final": "What size would you like? We have small, medium, or large."
+        },
+        {
+          "case": "korean-input",
+          "action": "clarify",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Got it! Latte, right? Need it hot or iced?",
+          "final": "Sorry, what would you like? We have latte, Americano, cold brew, or hot chocolate."
+        },
+        {
+          "case": "turn-limit",
+          "action": "clarify",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "I didn’t catch that. What would you like from the menu? Latte, Americano, cold brew, or hot chocolate?",
+          "final": "Sorry, what would you like? We have latte, Americano, cold brew, or hot chocolate."
+        },
+        {
+          "case": "turn-limit",
+          "action": "clarify",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "Sure! What would you like? We have latte, Americano, cold brew, or hot chocolate.",
+          "final": "Sorry, what would you like? We have latte, Americano, cold brew, or hot chocolate."
+        },
+        {
+          "case": "turn-limit",
+          "action": "end_unfinished",
+          "violations": [
+            "question after end"
+          ],
+          "rejected": "Sorry, what would you like? We have latte, Americano, cold brew, or hot chocolate.",
+          "final": "Sorry, I need to help the next customer. You can order again anytime!"
+        },
+        {
+          "case": "yes-to-options-asks-which",
+          "action": "close",
+          "violations": [
+            "more than 2 sentences"
+          ],
+          "rejected": "You're welcome! Enjoy your latte. See you soon!",
+          "final": "Great, it'll be ready in a few minutes. Thanks!"
+        }
+      ]
+    },
+    "feedback": {
+      "model_id": "ollama:qwen3:8b",
+      "cases": 10,
+      "metrics": {
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.933,
+        "false_feedback_rate": 0.125,
+        "clean_cases_flagged": "0/3",
+        "tp": 7,
+        "fp": 1,
+        "fn": 0
+      },
+      "details": [
+        {
+          "id": "fb-01",
+          "gold": [
+            {
+              "original": "I want hot latte.",
+              "type": "article"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "I want hot latte.",
+              "corrected": "I want a hot latte.",
+              "type": "article",
+              "explanation_ko": "I want a hot latte. 라테는 'a'를 사용해야 합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-02",
+          "gold": [],
+          "predicted": [],
+          "unnatural": [],
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-03",
+          "gold": [
+            {
+              "original": "I'd like two latte, please.",
+              "type": "plural"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "I'd like two latte, please.",
+              "corrected": "I'd like two lattes, please.",
+              "type": "plural",
+              "explanation_ko": "latte는 복수형으로 'lattes'로 써야 합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-04",
+          "gold": [
+            {
+              "original": "Can I has a cold brew?",
+              "type": "verb_form"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "Can I has a cold brew?",
+              "corrected": "Can I have a cold brew?",
+              "type": "verb_form",
+              "explanation_ko": "Can I has는 'Can I have'로 바꿔야 해요. 'have'가 올바른 동사예요."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-05",
+          "gold": [
+            {
+              "original": "Give me hot chocolate.",
+              "type": "article"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "Give me hot chocolate.",
+              "corrected": "Give me a hot chocolate.",
+              "type": "article",
+              "explanation_ko": "이름이 있는 음료는 'a'를 붙여야 합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-06",
+          "gold": [],
+          "predicted": [],
+          "unnatural": [],
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-07",
+          "gold": [
+            {
+              "original": "I want a americano iced.",
+              "type": "article"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "I want a americano iced.",
+              "corrected": "I want an iced americano.",
+              "type": "article",
+              "explanation_ko": "Iced는 첫 번째 단어이므로 'an'을 사용해야 합니다."
+            },
+            {
+              "original": "Medium size please.",
+              "corrected": "A medium size, please.",
+              "type": "article",
+              "explanation_ko": "크기 앞에 'a'를 붙여야 합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-08",
+          "gold": [],
+          "predicted": [],
+          "unnatural": [],
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-09",
+          "gold": [
+            {
+              "original": "I would like an latte with almond milk.",
+              "type": "article"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "I would like an latte with almond milk.",
+              "corrected": "I would like a latte with almond milk.",
+              "type": "article",
+              "explanation_ko": "latte는 자주 'a'로 시작합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        },
+        {
+          "id": "fb-10",
+          "gold": [
+            {
+              "original": "She want a hot chocolate for my friend.",
+              "type": "subject_verb_agreement"
+            }
+          ],
+          "predicted": [
+            {
+              "original": "She want a hot chocolate for my friend.",
+              "corrected": "She wants a hot chocolate for my friend.",
+              "type": "subject_verb_agreement",
+              "explanation_ko": "동사 'want'은 3인칭 단수일 때 'wants'로 써야 합니다."
+            }
+          ],
+          "unnatural": [],
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "source": "llm"
+        }
+      ]
+    },
+    "asr": {
+      "model_id": "faster-whisper:small.en:cuda:int8_float16",
+      "context_mode": "none",
+      "token_cap": false,
+      "manifest": "evals\\audio\\synthetic\\manifest.jsonl",
+      "synthetic": true,
+      "metrics": {
+        "n": 240,
+        "wer": 0.0525,
+        "slot_accuracy": 0.8917,
+        "latency_ms_p50": 220,
+        "latency_ms_p95": 342,
+        "rtf_mean": 0.121
+      },
+      "by_condition": {
+        "babble5db": {
+          "n": 120,
+          "wer": 0.0843,
+          "slot_accuracy": 0.85,
+          "latency_ms_p50": 219,
+          "latency_ms_p95": 340,
+          "rtf_mean": 0.122
+        },
+        "clean": {
+          "n": 120,
+          "wer": 0.0207,
+          "slot_accuracy": 0.9333,
+          "latency_ms_p50": 221,
+          "latency_ms_p95": 342,
+          "rtf_mean": 0.12
+        }
+      },
+      "errors": [
+        {
+          "file": "00-bf_emma-clean.wav",
+          "text": "Hi, can I get a large hot latte, please?",
+          "hypothesis": "Hi can I get a large heart latte please?",
+          "slots_ok": false
+        },
+        {
+          "file": "00-bm_george-babble5db.wav",
+          "text": "Hi, can I get a large hot latte, please?",
+          "hypothesis": "How can I get a large heart loss, please?",
+          "slots_ok": false
+        },
+        {
+          "file": "01-bm_george-babble5db.wav",
+          "text": "I want a small iced Americano.",
+          "hypothesis": "I was a small-sized Americana once.",
+          "slots_ok": false
+        },
+        {
+          "file": "02-bm_george-babble5db.wav",
+          "text": "Could I have a medium cold brew?",
+          "hypothesis": "Could I have a medium cold breath?",
+          "slots_ok": false
+        },
+        {
+          "file": "03-bf_emma-clean.wav",
+          "text": "One small hot chocolate, please.",
+          "hypothesis": "One small heart chocolate please.",
+          "slots_ok": false
+        },
+        {
+          "file": "03-bf_emma-babble5db.wav",
+          "text": "One small hot chocolate, please.",
+          "hypothesis": "One small heart chocolate please.",
+          "slots_ok": false
+        },
+        {
+          "file": "03-bm_george-clean.wav",
+          "text": "One small hot chocolate, please.",
+          "hypothesis": "One small heart chocolate, please.",
+          "slots_ok": false
+        },
+        {
+          "file": "05-af_heart-babble5db.wav",
+          "text": "I'd like a large iced latte with almond milk.",
+          "hypothesis": "I like a large iced latte with almond milk.",
+          "slots_ok": true
+        },
+        {
+          "file": "05-bm_george-babble5db.wav",
+          "text": "I'd like a large iced latte with almond milk.",
+          "hypothesis": "I'd like a large iced latte with lemon milk.",
+          "slots_ok": false
+        },
+        {
+          "file": "06-bm_george-babble5db.wav",
+          "text": "Make it a medium, please.",
+          "hypothesis": "May it be a medium, please.",
+          "slots_ok": true
+        },
+        {
+          "file": "07-af_heart-babble5db.wav",
+          "text": "Actually, can I change that to iced?",
+          "hypothesis": "Actually, can I change that to ice?",
+          "slots_ok": true
+        },
+        {
+          "file": "07-am_michael-babble5db.wav",
+          "text": "Actually, can I change that to iced?",
+          "hypothesis": "Actually, can I change that to ice?",
+          "slots_ok": true
+        },
+        {
+          "file": "07-bm_george-babble5db.wav",
+          "text": "Actually, can I change that to iced?",
+          "hypothesis": "Actually, can I change that to ice?",
+          "slots_ok": true
+        },
+        {
+          "file": "08-bm_george-babble5db.wav",
+          "text": "Can I add an extra shot?",
+          "hypothesis": "Can I have an extra shot?",
+          "slots_ok": true
+        },
+        {
+          "file": "10-bm_george-babble5db.wav",
+          "text": "No milk, thanks.",
+          "hypothesis": "No, thanks.",
+          "slots_ok": false
+        },
+        {
+          "file": "11-am_michael-babble5db.wav",
+          "text": "Do you have pumpkin spice latte?",
+          "hypothesis": "and you have pumpkin spice latte.",
+          "slots_ok": true
+        },
+        {
+          "file": "11-bm_george-babble5db.wav",
+          "text": "Do you have pumpkin spice latte?",
+          "hypothesis": "You have pumpkin spice latte.",
+          "slots_ok": true
+        },
+        {
+          "file": "12-af_heart-clean.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "than a medium-hot latte, please.",
+          "slots_ok": true
+        },
+        {
+          "file": "12-af_heart-babble5db.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "When a medium hot latte sleeps...",
+          "slots_ok": true
+        },
+        {
+          "file": "12-am_michael-clean.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "than a medium-hot latte, please.",
+          "slots_ok": true
+        },
+        {
+          "file": "12-am_michael-babble5db.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "In a medium hot latte, please.",
+          "slots_ok": true
+        },
+        {
+          "file": "12-bf_emma-clean.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "than a medium-heart latte please.",
+          "slots_ok": false
+        },
+        {
+          "file": "12-bm_george-babble5db.wav",
+          "text": "Then a medium hot latte, please.",
+          "hypothesis": "I'm gonna leave you in a hot latte, please.",
+          "slots_ok": false
+        },
+        {
+          "file": "15-bf_emma-clean.wav",
+          "text": "Small, please.",
+          "hypothesis": "Small Pleaser",
+          "slots_ok": true
+        },
+        {
+          "file": "15-bf_emma-babble5db.wav",
+          "text": "Small, please.",
+          "hypothesis": "Small pleaser.",
+          "slots_ok": true
+        },
+        {
+          "file": "16-bf_emma-clean.wav",
+          "text": "Hot, please.",
+          "hypothesis": "Heart pleasers",
+          "slots_ok": false
+        },
+        {
+          "file": "16-bf_emma-babble5db.wav",
+          "text": "Hot, please.",
+          "hypothesis": "Heart pleaser.",
+          "slots_ok": false
+        },
+        {
+          "file": "16-bm_george-clean.wav",
+          "text": "Hot, please.",
+          "hypothesis": "Heart, please.",
+          "slots_ok": false
+        },
+        {
+          "file": "16-bm_george-babble5db.wav",
+          "text": "Hot, please.",
+          "hypothesis": "Haunt, please.",
+          "slots_ok": false
+        },
+        {
+          "file": "17-bf_emma-babble5db.wav",
+          "text": "Yes, that's all.",
+          "hypothesis": "Yes, that's all, ladies.",
+          "slots_ok": true
+        },
+        {
+          "file": "18-af_heart-babble5db.wav",
+          "text": "No, that's it.",
+          "hypothesis": "No, that's not.",
+          "slots_ok": true
+        },
+        {
+          "file": "21-bm_george-babble5db.wav",
+          "text": "I'll have a big iced Americano.",
+          "hypothesis": "I'll have as big as Americano.",
+          "slots_ok": false
+        },
+        {
+          "file": "22-am_michael-babble5db.wav",
+          "text": "Could I get the hot cocoa in small?",
+          "hypothesis": "Could I get the hot coke going small?",
+          "slots_ok": false
+        },
+        {
+          "file": "22-bf_emma-clean.wav",
+          "text": "Could I get the hot cocoa in small?",
+          "hypothesis": "Could I get the heart cocoa in small?",
+          "slots_ok": false
+        },
+        {
+          "file": "22-bf_emma-babble5db.wav",
+          "text": "Could I get the hot cocoa in small?",
+          "hypothesis": "Could I get the heart cocoa in small?",
+          "slots_ok": false
+        },
+        {
+          "file": "22-bm_george-clean.wav",
+          "text": "Could I get the hot cocoa in small?",
+          "hypothesis": "Could I get the heart cocoa in small?",
+          "slots_ok": false
+        },
+        {
+          "file": "22-bm_george-babble5db.wav",
+          "text": "Could I get the hot cocoa in small?",
+          "hypothesis": "Could I get the hard cocoa and cereal?",
+          "slots_ok": false
+        },
+        {
+          "file": "25-af_heart-babble5db.wav",
+          "text": "A medium iced latte with an extra shot, please.",
+          "hypothesis": "A medium iced latte with an extra shot, really.",
+          "slots_ok": true
+        },
+        {
+          "file": "25-bf_emma-babble5db.wav",
+          "text": "A medium iced latte with an extra shot, please.",
+          "hypothesis": "A medium iced latte with an extra sharp please.",
+          "slots_ok": false
+        },
+        {
+          "file": "25-bm_george-babble5db.wav",
+          "text": "A medium iced latte with an extra shot, please.",
+          "hypothesis": "A medium iced latte with an extra shot of clean.",
+          "slots_ok": true
+        }
+      ]
+    }
+  }
+}

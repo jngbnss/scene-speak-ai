@@ -79,3 +79,11 @@ def test_feedback_review_and_repeated_errors(repo):
 def test_review_unknown_user(repo):
     with pytest.raises(KeyError):
         repo.review(999)
+
+
+def test_same_nickname_created_concurrently_gets_one_id(repo):
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(8) as pool:
+        ids = set(pool.map(lambda _: repo.get_or_create_user("race"), range(16)))
+    assert len(ids) == 1 and None not in ids
