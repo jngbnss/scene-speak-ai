@@ -52,6 +52,22 @@
 
 복습 따라 말하기(`POST /api/shadowing`)는 정답 문장이 있으므로 빠진 단어와 덧붙인 단어를 표시한다. 인식기가 확신하지 못한 단어는 "빠짐" 대신 "불확실"로 표시한다(`evaluation/shadowing.py`).
 
+## 뉴욕 월드와 미션 대화 (단계 5)
+
+```
+브라우저: WorldView(canvas) ── NPC에게 다가가 Space ──▶ ConversationScreen(sceneId)
+                                                         │ session_start {scene_id}
+백엔드:   load_any(scene_id) ─┬─ scenes/new-york-cafe.yaml   → ConversationSession (Scene Director)
+                              └─ scenes/talks/{id}.yaml       → TalkSession (단계 체크리스트)
+```
+
+- **월드**(`frontend/src/features/world/`)는 브라우저에서만 돈다. `map.ts`가 타일 지도와 NPC 위치·장면 ID를 정의한다. `draw.ts`는 타일과 캐릭터를 코드로 그리고(이미지 파일 없음), `physics.ts`는 충돌과 대화 가능 거리를 계산한다. 정적 지도는 한 번만 그려 두고, 매 프레임 카메라 영역만 확대해 복사한다.
+- **미션 대화**(`backend/app/scenes/talk.py`)는 카페 세션과 같은 인터페이스(`start`, `handle_text`, `end`, `ended`, `user_turns`)를 가진다. 그래서 WebSocket, 피드백, 발화 분석을 그대로 쓴다.
+  - 진행 판정: 사용자 발화를 장면 YAML의 단계별 정규식과 대조한다. 모든 단계를 해내면 성공, 작별 인사나 턴 제한이면 미완료다(D-030).
+  - NPC 대사 검사(`TalkGuard`): 문장 수, 금지 표현, 장면 사실에 없는 가격, 종료 후 질문. 걸리면 1회 재생성 후 템플릿 대사를 쓴다.
+- 클라이언트에는 `SceneInfo.kind`(`order` | `talk`)와 `slot_labels`가 전달된다. 오른쪽 패널은 카페에서는 주문 상태를, 미션에서는 할 일 체크리스트를 보여준다.
+- 미션 완료 기록은 닉네임별로 브라우저(localStorage)에 남는다. 대화 기록과 피드백은 서버 SQLite에 저장된다.
+
 ## 백엔드 모듈
 
 | 경로 | 역할 |
@@ -70,7 +86,8 @@
 
 | 경로 | 역할 |
 |---|---|
-| `features/conversation/` | 대화 상태 리듀서, WebSocket 세션 훅, 대화 화면(전사 고치기 포함) |
+| `features/world/` | 뉴욕 도트 맵, 캐릭터 그리기, 이동·충돌, NPC 정의 |
+| `features/conversation/` | 대화 상태 리듀서, WebSocket 세션 훅, 대화 화면(전사 고치기 포함), NPC별 대화 화면 |
 | `features/microphone/` | VAD 마이크 훅과 버튼 |
 | `features/scenes/OrderPanel.tsx` | Director가 보낸 주문 상태 표시 (상태를 소유하지 않음) |
 | `features/feedback/` | 피드백 카드, 복습 탭 |

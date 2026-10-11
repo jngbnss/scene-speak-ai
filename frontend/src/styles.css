@@ -31,6 +31,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.55; }
 button {
   font: inherit; cursor: pointer; border-radius: 10px; padding: 8px 14px;
@@ -40,7 +41,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-.app { max-width: 1040px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+.app { max-width: 1180px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
 .top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
 .top h1 { margin: 2px 0; font-size: 26px; line-height: 1.2; }
 .eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
@@ -162,3 +163,56 @@ mark.uncertain { background: none; color: inherit; text-decoration: underline wa
 .sw-extra { background: color-mix(in srgb, var(--warn) 18%, transparent); }
 .sw-unclear { text-decoration: underline wavy var(--warn); text-underline-offset: 3px; }
 .sw small { font-size: 11px; color: var(--muted); }
+
+/* step 5: New York street */
+.world-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .world-layout { grid-template-columns: 1fr; } }
+.world { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.world-stage { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #0e1115; }
+.world-canvas { display: block; width: 100%; height: min(64vh, 560px); min-height: 300px; image-rendering: pixelated; touch-action: none; }
+.world-prompt { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: rgba(14, 17, 21, 0.86); color: #fff; font-size: 14px; }
+.world-prompt button { background: #ffcc33; border-color: #ffcc33; color: #14181e; font-weight: 700; }
+kbd { font-family: ui-monospace, Consolas, monospace; font-size: 11px; padding: 1px 5px; border-radius: 4px; border: 1px solid currentColor; opacity: 0.8; }
+.world-toast { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.92); color: #14181e; font-size: 14px; }
+.world-help { margin: 0; }
+.dpad { display: none; grid-template-areas: ". up ." "left . right" ". down ."; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 48px); gap: 4px; justify-content: center; user-select: none; -webkit-user-select: none; }
+.dpad button { font-size: 18px; padding: 0; touch-action: none; }
+.dpad-up { grid-area: up; } .dpad-down { grid-area: down; } .dpad-left { grid-area: left; } .dpad-right { grid-area: right; }
+@media (pointer: coarse), (max-width: 760px) { .dpad { display: grid; } .world-canvas { height: min(52vh, 440px); } }
+.missions { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.missions h2 { margin: 0 0 8px; font-size: 15px; }
+.missions ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.missions li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.mission-mark { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: #ffcc33; color: #14181e; }
+.missions li.cleared .mission-mark { background: var(--ok); color: #fff; }
+.conversation-screen { display: flex; flex-direction: column; gap: 14px; }
+.scene-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; padding: 14px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.scene-head h2 { margin: 2px 0; font-size: 22px; }
+.back-btn { font-weight: 600; }
+.banner-actions { display: flex; gap: 8px; }
+.banner { gap: 10px; flex-wrap: wrap; }
+
+/* evaluation report */
+.report { display: flex; flex-direction: column; gap: 12px; }
+.report h2 { margin: 0; font-size: 20px; }
+.report-pick { display: flex; gap: 12px; flex-wrap: wrap; }
+.report-pick label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); flex: 1 1 260px; min-width: 0; }
+.report-pick select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 100%; }
+.table-wrap { overflow-x: auto; }
+.metrics { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.metrics th, .metrics td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.metrics thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.metrics tbody th { font-weight: 500; }
+.verdict-개선 { color: var(--ok); }
+.verdict-악화 { color: var(--bad); }
+.bars-col { width: 34%; min-width: 120px; }
+.bars { display: flex; flex-direction: column; gap: 3px; }
+.bar { display: block; height: 7px; border-radius: 4px; min-width: 2px; }
+.bar-old { background: var(--muted); opacity: 0.55; }
+.bar-new { background: var(--accent); }
+.bar-new.verdict-개선 { background: var(--ok); }
+.bar-new.verdict-악화 { background: var(--bad); }
+.legend { font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+.legend::before { content: ""; width: 10px; height: 6px; border-radius: 3px; display: inline-block; }
+.legend-old::before { background: var(--muted); opacity: 0.55; }
+.legend-new::before { background: var(--accent); }

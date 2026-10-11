@@ -40,6 +40,10 @@ class ConversationSession:
     def ended(self) -> bool:
         return self.director.state.phase in ("completed", "cancelled")
 
+    @property
+    def user_turns(self) -> int:
+        return self.director.state.user_turns
+
     def _respond(self, turn: DirectorTurn) -> TurnResult:
         reply = self.responder.reply(turn, self.transcript)
         self.transcript.append(("npc", reply.text))

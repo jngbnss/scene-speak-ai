@@ -89,7 +89,7 @@ off_menu_terms:
 
 intents:
   cancel: ["cancel", "never mind", "nevermind", "forget it"]
-  done: ["that's all", "that's it", "that's everything", "nothing else", "all good"]
+  done: ["that's all", "that's it", "that's everything", "nothing else", "all good", "that is all", "that is everything", "it is everything", "it's everything", "that'll be all", "i'm good"]
   deny: ["no", "nope", "not really", "not right", "that's wrong"]
   confirm: ["yes", "yeah", "yep", "sure", "okay", "ok", "correct", "sounds good", "perfect", "fine", "that's fine", "that's okay"]
 
@@ -132,6 +132,10 @@ actions:
     phase: ordering
     instruction: "Briefly ask if they want a milk choice or an extra shot."
     fallback: "Any milk preference or an extra shot?"
+  ask_which_option:
+    phase: ordering
+    instruction: "The customer said yes to extras but not which one. Ask briefly whether they want a milk choice or an extra shot."
+    fallback: "Sure! A milk choice, or an extra shot?"
   ask_change:
     phase: ordering
     instruction: "Ask what they would like to change in the order."

@@ -1,4 +1,5 @@
 /** Mirrors evals/compare.py so the /report page and the CLI agree. */
+import { DEFAULT_INFO } from "./metricInfo";
 
 export interface MetricInfo {
   better?: "lower" | "higher";
@@ -40,7 +41,10 @@ export function flatten(data: Record<string, unknown>, name: string): Record<str
 }
 
 export function metricInfo(...files: Record<string, unknown>[]): Record<string, MetricInfo> {
-  return Object.assign({}, ...files.map((f) => (f.metric_info ?? {}) as Record<string, MetricInfo>));
+  return Object.assign(
+    { ...DEFAULT_INFO },
+    ...files.map((f) => (f.metric_info ?? {}) as Record<string, MetricInfo>),
+  );
 }
 
 export function compareMetrics(

@@ -11,6 +11,7 @@ const SLOT_LABELS: Record<string, string> = {
 const PHASE_LABELS: Record<string, string> = {
   greeting: "인사",
   ordering: "주문 중",
+  talking: "대화 중",
   clarifying: "확인 필요",
   confirming: "주문 확인",
   completed: "완료",
@@ -28,15 +29,17 @@ function display(value: SlotValue): string {
   return String(value).replace(/_/g, " ");
 }
 
+/** Order state for the café; a to-do checklist for mission talks. */
 export function OrderPanel({ scene, phase, slots }: Props) {
+  const talk = scene.kind === "talk";
   const rows = [
     ...scene.required_slots.map((s) => ({ slot: s, required: true })),
     ...scene.optional_slots.map((s) => ({ slot: s, required: false })),
   ];
   return (
-    <aside className="order-panel" aria-label="주문 상태">
+    <aside className="order-panel" aria-label={talk ? "할 일" : "주문 상태"}>
       <div className="panel-head">
-        <h2>주문 상태</h2>
+        <h2>{talk ? "할 일" : "주문 상태"}</h2>
         <span className={`phase phase-${phase}`}>{PHASE_LABELS[phase] ?? phase}</span>
       </div>
       <dl className="slots">
@@ -46,10 +49,10 @@ export function OrderPanel({ scene, phase, slots }: Props) {
           return (
             <div key={slot} className={`slot${filled ? " filled" : ""}`}>
               <dt>
-                {SLOT_LABELS[slot] ?? slot}
-                {required && <span className="req">필수</span>}
+                {scene.slot_labels?.[slot] ?? SLOT_LABELS[slot] ?? slot}
+                {required && !talk && <span className="req">필수</span>}
               </dt>
-              <dd>{display(value)}</dd>
+              <dd>{talk ? (filled ? "✓" : "—") : display(value)}</dd>
             </div>
           );
         })}

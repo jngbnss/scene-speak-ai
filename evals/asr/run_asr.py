@@ -73,7 +73,8 @@ def evaluate(
     device: str = "cuda",
     compute_type: str = "int8_float16",
     context_mode: str = "prompt",
-    token_cap: bool = True,
+    # Off in the app too (EXP-ASR-001: capping cut words, condition G).
+    token_cap: bool = False,
 ) -> dict:
     """Transcribes every manifest entry. context_mode "none" sends no scene vocabulary."""
     scene = load_scene("new-york-cafe")
@@ -146,7 +147,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--compute-type", default="int8_float16")
     parser.add_argument("--context-mode", default="prompt", choices=["hotwords", "prompt", "none"])
-    parser.add_argument("--no-token-cap", action="store_true")
+    parser.add_argument("--token-cap", action="store_true", help="cap output tokens (condition G)")
     parser.add_argument("--label", default="run")
     parser.add_argument("--out", type=Path, default=ROOT / "evals" / "results")
     args = parser.parse_args()
@@ -159,7 +160,7 @@ def main() -> None:
             device=args.device,
             compute_type=args.compute_type,
             context_mode=args.context_mode,
-            token_cap=not args.no_token_cap,
+            token_cap=args.token_cap,
         ),
     }
     args.out.mkdir(parents=True, exist_ok=True)

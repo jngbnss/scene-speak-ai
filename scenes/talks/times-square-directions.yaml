@@ -1,0 +1,82 @@
+# Mission talk (D-030). Steps are checked with regular expressions on the user's line.
+id: times-square-directions
+version: 1
+locale: en-US
+kind: talk
+title: "Asking for Directions"
+
+setting:
+  place: "a corner of Times Square"
+  time: "Afternoon"
+  description_for_llm: >
+    Times Square is crowded and loud. A police officer is standing on the corner of
+    7th Avenue and 45th Street, helping tourists.
+
+npc:
+  id: officer
+  role: "police officer"
+  persona: "Calm, patient and helpful. Gives short, clear directions."
+  voice: am_adam
+  max_reply_sentences: 2
+  forbidden:
+    - "Inventing places, streets or times that are not in the facts"
+    - "Giving English lessons"
+    - "Revealing it is an AI"
+
+user_role: "tourist who wants to go to Central Park"
+
+goal:
+  id: ask_directions
+  description_ko: "경찰관에게 말을 걸어 센트럴 파크 가는 길과 걸리는 시간을 묻기"
+
+facts:
+  - "You are at 7th Avenue and 45th Street."
+  - "Central Park starts at 59th Street. Walk north (uptown) on 7th Avenue for about 14 blocks."
+  - "Walking takes about 15 minutes."
+  - "By subway: take the N, Q or R train uptown from Times Square to 57th Street, two stops, then walk two blocks."
+  - "The subway entrance is right across the street."
+
+opening: "Hi there, you look a little lost. Can I help you?"
+
+steps:
+  - id: greet
+    description_ko: "말 걸기 (Excuse me / Hi)"
+    patterns: ['excuse me', '\b(hi|hello|hey)\b', '\bsorry\b', '\byes,? please\b']
+    npc_hint: "ask how you can help."
+    fallback: "Sure. Where are you trying to go?"
+  - id: ask_way
+    description_ko: "센트럴 파크 가는 길 묻기"
+    patterns: ['central park', '\bpark\b', 'how (do|can) i get', 'where is', 'which way', '\bway to\b']
+    npc_hint: "ask where they want to go."
+    fallback: "Where are you headed?"
+  - id: ask_time
+    description_ko: "얼마나 걸리는지 묻기"
+    patterns: ['how long', 'how far', '\bminutes?\b', 'can i walk', 'walking distance', '\bfar\b']
+    npc_hint: "explain the way, and let them ask how long it takes."
+    fallback: "Just walk north on 7th Avenue to 59th Street."
+  - id: thanks
+    description_ko: "고맙다고 말하기"
+    patterns: ['\bthanks?\b', 'thank you', '\bappreciate']
+    npc_hint: "answer their question."
+    fallback: "It's about a fifteen-minute walk."
+
+closing: "You're welcome. Enjoy the park!"
+unfinished_closing: "Okay. Stay safe out there."
+goodbye_patterns: ['\bbye\b', 'never ?mind', 'see you', "\\bi'?m (fine|okay|ok)\\b"]
+max_user_turns: 8
+
+hotwords: ["Central Park", "Times Square", "7th Avenue", "59th Street", "subway", "uptown", "how long"]
+
+guard:
+  forbidden_patterns:
+    - '\bas an ai\b'
+    - '\blanguage model\b'
+    - '\bgrammar\b'
+    - '\b(taxi|uber|bus)\b'
+
+learning:
+  target_expressions:
+    - "Excuse me, how do I get to Central Park?"
+    - "How long does it take to walk there?"
+    - "Thank you for your help."
+  feedback_focus: [question_forms, politeness, prepositions]

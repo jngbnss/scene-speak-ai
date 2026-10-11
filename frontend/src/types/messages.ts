@@ -17,6 +17,10 @@ export interface SceneInfo {
   goal_ko: string;
   required_slots: string[];
   optional_slots: string[];
+  /** "order": café Director slots; "talk": mission steps labelled in slot_labels. */
+  kind?: "order" | "talk";
+  slot_labels?: Record<string, string>;
+  npc_role?: string;
 }
 
 export interface WordOut {

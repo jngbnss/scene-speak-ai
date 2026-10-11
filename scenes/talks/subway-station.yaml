@@ -1,0 +1,80 @@
+# Mission talk (D-030). Steps are checked with regular expressions on the user's line.
+id: subway-station
+version: 1
+locale: en-US
+kind: talk
+title: "Subway Station"
+
+setting:
+  place: "the Grand Central subway station"
+  time: "Morning"
+  description_for_llm: >
+    A station agent stands near the turnstiles and helps riders. Trains are rumbling below.
+
+npc:
+  id: agent
+  role: "subway station agent"
+  persona: "Busy but kind, answers briefly and clearly."
+  voice: am_eric
+  max_reply_sentences: 2
+  forbidden:
+    - "Inventing train lines, stops or fares that are not in the facts"
+    - "Giving English lessons"
+    - "Revealing it is an AI"
+
+user_role: "tourist going to the Brooklyn Bridge"
+
+goal:
+  id: ride_subway
+  description_ko: "브루클린 브리지 가는 지하철, 요금, 결제 방법 묻기"
+
+facts:
+  - "To the Brooklyn Bridge: take the 4 or 5 express train downtown to Brooklyn Bridge-City Hall. It is three stops."
+  - "The downtown platform is down the stairs on the left."
+  - "One ride costs $2.90."
+  - "Pay by tapping a contactless card or phone on the OMNY reader at the turnstile."
+
+opening: "Morning! Need some help?"
+
+steps:
+  - id: ask_route
+    description_ko: "어떤 열차를 타야 하는지 묻기"
+    patterns: ['brooklyn', 'which (train|line)', 'how (do|can) i get', '\bget to\b', '\bgo to\b', 'what train']
+    npc_hint: "ask where they are going."
+    fallback: "Where are you headed?"
+  - id: ask_fare
+    description_ko: "요금 묻기"
+    patterns: ['how much', '\bfare\b', '\bcost', '\bprice\b', '\bticket\b']
+    npc_hint: "give the train and the platform."
+    fallback: "Take the 4 or 5 downtown, three stops."
+  - id: ask_pay
+    description_ko: "결제 방법 묻기"
+    patterns: ['\bpay\b', '\bcard\b', 'credit', '\bomny\b', 'metro ?card', '\btap\b', '\bcash\b', '\bphone\b']
+    npc_hint: "tell the fare."
+    fallback: "It's two ninety a ride."
+  - id: thanks
+    description_ko: "고맙다고 말하기"
+    patterns: ['\bthanks?\b', 'thank you', '\bappreciate']
+    npc_hint: "explain how to pay."
+    fallback: "Just tap your card or phone at the turnstile."
+
+closing: "You got it. Have a nice ride!"
+unfinished_closing: "Alright. Have a good one."
+goodbye_patterns: ['\bbye\b', 'never ?mind', 'see you', "\\bi'?m (fine|okay|ok)\\b"]
+max_user_turns: 8
+
+hotwords: ["Brooklyn Bridge", "downtown", "express", "OMNY", "MetroCard", "fare", "turnstile", "platform"]
+
+guard:
+  forbidden_patterns:
+    - '\bas an ai\b'
+    - '\blanguage model\b'
+    - '\bgrammar\b'
+    - '\b(taxi|uber|bus|ferry)\b'
+
+learning:
+  target_expressions:
+    - "Which train goes to the Brooklyn Bridge?"
+    - "How much is the fare?"
+    - "Can I pay with my card?"
+  feedback_focus: [question_forms, articles, prepositions]

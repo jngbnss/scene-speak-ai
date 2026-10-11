@@ -29,7 +29,7 @@ export function ReviewView({ userId }: { userId: number }) {
       <div className="review-head">
         <h2>{data.nickname}님의 복습</h2>
         <p className="muted">
-          대화 {data.sessions.length}회 · 주문 성공 {done}회
+          대화 {data.sessions.length}회 · 목표 달성 {done}회
         </p>
       </div>
 

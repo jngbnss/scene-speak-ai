@@ -3,7 +3,29 @@
 | 파일 | 내용 | 사용처 |
 |---|---|---|
 | `dialogue-cases.jsonl` | Scene Director 대화 케이스 | `backend/tests/test_director.py` (CI) |
-| `audio/` | 음성 녹음 (Git 제외) | 단계 3 음성인식 실험 |
+| `feedback-cases.jsonl` | 피드백 정답 라벨 | `score_feedback.py` |
+| `asr/` | 합성 음성 생성, 음성인식 측정 | `make_synthetic.py`, `run_asr.py` |
+| `audio/` | 음성 녹음 (Git 제외) | 음성인식 실험 |
+| `results/` | 측정 결과 JSON (커밋함, D-018) | `compare.py`, 화면의 평가 리포트 |
+
+## 평가 하네스 (`run.py`, `compare.py`)
+
+대화 품질, 피드백 정확도, 음성인식을 한 번에 또는 골라서 측정합니다. 결과 파일 `results/{시각}-suite-{라벨}.json`에는 다음이 들어갑니다.
+
+- 모델 이름과 설정(LLM provider, Whisper 모델, 문맥 힌트 방식)
+- git 커밋, 커밋하지 않은 변경 여부(`git_dirty`)
+- 평탄화한 지표(`dialogue.scene_deviation_rate`, `asr.wer` 등)와 지표별 방향(낮을수록 좋음 / 높을수록 좋음)
+- 섹션별 상세 결과
+
+```powershell
+cd backend
+.venv\Scripts\python.exe ..\evals\run.py --label baseline
+.venv\Scripts\python.exe ..\evals\run.py --label plain --asr-context none --note "힌트 없음"
+.venv\Scripts\python.exe ..\evals\run.py --label dlg --only dialogue feedback
+.venv\Scripts\python.exe ..\evals\compare.py results\A.json results\B.json [--markdown]
+```
+
+`compare.py`는 예전 단일 결과 파일(`*-dialogue-*`, `*-feedback-*`, `*-asr-*`)도 읽습니다. 같은 비교를 웹의 **평가 리포트** 탭(`#/report`)에서 표와 막대로 볼 수 있습니다.
 
 ## dialogue-cases.jsonl 형식
 

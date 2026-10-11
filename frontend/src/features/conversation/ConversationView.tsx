@@ -14,6 +14,10 @@ interface Props {
   onSay: (text: string) => void;
   onFix: (seq: number, text: string) => void;
   mic: { status: MicStatus; error: string | null; start: () => void; stop: () => void };
+  /** Name on NPC bubbles. */
+  npcLabel?: string;
+  /** Example sentence in the input box. */
+  example?: string;
 }
 
 /** Underlines words the recognizer was unsure about. */
@@ -84,6 +88,8 @@ export function ConversationView({
   onSay,
   onFix,
   mic,
+  npcLabel = "Barista",
+  example = "Can I get a large hot latte?",
 }: Props) {
   const [draft, setDraft] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
@@ -107,7 +113,7 @@ export function ConversationView({
           <li key={line.id} className={`bubble ${line.speaker}`}>
             {line.speaker === "npc" ? (
               <>
-                <span className="who">Barista</span>
+                <span className="who">{npcLabel}</span>
                 {line.text}
               </>
             ) : (
@@ -117,7 +123,7 @@ export function ConversationView({
         ))}
         {waiting && (
           <li className="bubble npc typing" aria-live="polite">
-            <span className="who">Barista</span>…
+            <span className="who">{npcLabel}</span>…
           </li>
         )}
       </ol>
@@ -132,7 +138,7 @@ export function ConversationView({
           id="utterance"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Type in English, e.g. Can I get a large hot latte?"
+          placeholder={`Type in English, e.g. ${example}`}
           autoComplete="off"
           disabled={disabled}
         />

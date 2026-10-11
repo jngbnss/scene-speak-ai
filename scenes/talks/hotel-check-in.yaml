@@ -1,0 +1,81 @@
+# Mission talk (D-030). Steps are checked with regular expressions on the user's line.
+id: hotel-check-in
+version: 1
+locale: en-US
+kind: talk
+title: "Hotel Check-in"
+
+setting:
+  place: "the front desk of a mid-size hotel in Midtown"
+  time: "Evening"
+  description_for_llm: >
+    The lobby is quiet. The receptionist is checking in a guest who has a reservation.
+
+npc:
+  id: receptionist
+  role: "hotel receptionist"
+  persona: "Warm, professional and efficient."
+  voice: af_bella
+  max_reply_sentences: 2
+  forbidden:
+    - "Inventing prices, rooms, times or services that are not in the facts"
+    - "Giving English lessons"
+    - "Revealing it is an AI"
+
+user_role: "guest with a reservation"
+
+goal:
+  id: check_in
+  description_ko: "예약을 말하고 이름을 알려 체크인한 뒤 호텔 정보 하나 물어보기"
+
+facts:
+  - "The guest has a reservation for three nights. Any name they give is on the list."
+  - "Their room is 1204 on the 12th floor. The elevators are on the right."
+  - "Breakfast is from 7 to 10 a.m. on the 2nd floor and is included."
+  - "The Wi-Fi network is CityHotel and the password is on the key card sleeve."
+  - "Check-out is at 11 a.m."
+
+opening: "Good evening, welcome! How can I help you?"
+
+steps:
+  - id: reservation
+    description_ko: "예약했다고 말하기 / 체크인 요청"
+    patterns: ['reservation', 'booked', 'booking', 'check ?in', 'checking in']
+    npc_hint: "ask if they have a reservation."
+    fallback: "Are you checking in tonight?"
+  - id: name
+    description_ko: "이름 말하기"
+    patterns: ['my name is', '\bunder\b', '\bname\b', '\bthis is [a-z]+', '\b(mr|ms|mrs|miss)\b']
+    npc_hint: "ask for the name on the reservation."
+    fallback: "Great. What's the name on the reservation?"
+  - id: ask_info
+    description_ko: "호텔 정보 물어보기 (조식, 와이파이, 체크아웃)"
+    patterns: ['breakfast', 'wi-?fi', 'internet', 'password', 'check ?-?out', 'elevator', 'what time']
+    npc_hint: "give the room number and ask if they have any questions."
+    fallback: "You're in room 1204 on the 12th floor. Any questions?"
+  - id: thanks
+    description_ko: "고맙다고 말하기"
+    patterns: ['\bthanks?\b', 'thank you', '\bappreciate', '\bperfect\b']
+    npc_hint: "answer their question."
+    fallback: "Breakfast is from 7 to 10 on the 2nd floor."
+
+closing: "My pleasure. Enjoy your stay!"
+unfinished_closing: "No problem. Have a good evening."
+goodbye_patterns: ['\bbye\b', 'never ?mind', 'see you', '\bgood ?night\b']
+max_user_turns: 8
+
+hotwords: ["reservation", "check in", "breakfast", "Wi-Fi", "password", "check-out", "elevator"]
+
+guard:
+  forbidden_patterns:
+    - '\bas an ai\b'
+    - '\blanguage model\b'
+    - '\bgrammar\b'
+    - '\b(spa|pool|gym|parking)\b'
+
+learning:
+  target_expressions:
+    - "Hi, I have a reservation under Kim."
+    - "What time is breakfast?"
+    - "What's the Wi-Fi password?"
+  feedback_focus: [question_forms, articles, prepositions]

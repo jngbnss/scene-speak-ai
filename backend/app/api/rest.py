@@ -39,6 +39,19 @@ def utterance_audio(session_id: str, seq: int) -> FileResponse:
     return FileResponse(path, media_type="audio/wav", headers={"Cache-Control": "no-store"})
 
 
+class UserIn(BaseModel):
+    nickname: str = Field(min_length=1, max_length=40)
+
+
+@router.post("/users")
+def login(body: UserIn) -> dict:
+    """Nickname "login" (D-017): returns the user's id, creating the user if needed."""
+    try:
+        return {"user_id": get_services().repo.get_or_create_user(body.nickname)}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+
+
 @router.get("/users/{user_id}/review")
 def user_review(user_id: int) -> dict:
     try:

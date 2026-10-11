@@ -53,7 +53,7 @@ export function FeedbackView({ sessionId, status }: Props) {
         <article className="card">
           <h3>과업 결과</h3>
           <p className={feedback.task_success ? "ok" : "warn"}>
-            {feedback.task_success ? "주문 성공" : "주문 미완료"}
+            {feedback.task_success ? "목표 달성" : "목표 미완료"}
           </p>
           {feedback.missed_information.length > 0 && (
             <p className="muted">빠진 정보: {feedback.missed_information.join(", ")}</p>

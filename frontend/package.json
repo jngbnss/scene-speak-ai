@@ -7,11 +7,12 @@
     "assets": "node scripts/copy-vad-assets.mjs",
     "predev": "node scripts/copy-vad-assets.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/copy-vad-assets.mjs",
+    "prebuild": "node scripts/copy-vad-assets.mjs && node scripts/copy-reports.mjs",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "reports": "node scripts/copy-reports.mjs"
   },
   "dependencies": {
     "@ricky0123/vad-web": "0.0.30",

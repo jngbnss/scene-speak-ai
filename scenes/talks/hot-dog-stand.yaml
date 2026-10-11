@@ -1,0 +1,80 @@
+# Mission talk (D-030). Steps are checked with regular expressions on the user's line.
+id: hot-dog-stand
+version: 1
+locale: en-US
+kind: talk
+title: "Hot Dog Stand"
+
+setting:
+  place: "a hot dog cart on a Midtown street corner"
+  time: "Lunchtime"
+  description_for_llm: >
+    A busy street corner. The vendor is cheerful and quick, and serves one customer at a time.
+
+npc:
+  id: vendor
+  role: "hot dog vendor"
+  persona: "Cheerful, quick, a little chatty, classic New Yorker."
+  voice: am_michael
+  max_reply_sentences: 2
+  forbidden:
+    - "Mentioning food or prices that are not in the facts"
+    - "Giving English lessons"
+    - "Revealing it is an AI"
+
+user_role: "tourist"
+
+goal:
+  id: buy_hot_dog
+  description_ko: "핫도그를 원하는 토핑으로 주문하고 가격을 물어보기"
+
+facts:
+  - "Hot dog: $4. Soda: $2. Water: $1."
+  - "Toppings (free): mustard, ketchup, onions, relish, sauerkraut."
+  - "Cash and card are both fine."
+  - "There is nothing else on the menu."
+
+opening: "Hey there! What can I get you?"
+
+steps:
+  - id: order
+    description_ko: "핫도그 주문하기"
+    patterns: ['hot ?dogs?', '\bdogs?\b']
+    npc_hint: "ask what they would like."
+    fallback: "We've got hot dogs, four bucks each. Want one?"
+  - id: topping
+    description_ko: "토핑 말하기"
+    patterns: ['mustard', 'ketchup', 'onions?', 'relish', 'sauerkraut', '\b(everything|plain|no toppings?)\b']
+    npc_hint: "ask which toppings they want: mustard, ketchup, onions, relish or sauerkraut."
+    fallback: "What do you want on it? Mustard, ketchup, onions?"
+  - id: price
+    description_ko: "가격 물어보기"
+    patterns: ['how much', '\bprice\b', '\bcost', 'what do i owe', '\btotal\b']
+    npc_hint: "hand over the food and wait for them to ask how much it is."
+    fallback: "Here you go, buddy. Anything to drink?"
+  - id: thanks
+    description_ko: "고맙다고 말하기"
+    patterns: ['\bthanks?\b', 'thank you', '\bappreciate']
+    npc_hint: "tell them the price if they asked."
+    fallback: "That'll be four dollars."
+
+closing: "Enjoy your dog! Have a good one."
+unfinished_closing: "No problem. See you around!"
+goodbye_patterns: ['\bbye\b', 'never ?mind', 'see you', '\bgotta go\b', '\bno thanks\b']
+max_user_turns: 8
+
+hotwords: ["hot dog", "mustard", "ketchup", "onions", "relish", "sauerkraut", "soda", "how much"]
+
+guard:
+  forbidden_patterns:
+    - '\bas an ai\b'
+    - '\blanguage model\b'
+    - '\bgrammar\b'
+    - '\b(pizza|pretzel|burger|fries|hamburger|taco|coffee)\b'
+
+learning:
+  target_expressions:
+    - "Can I get a hot dog with mustard, please?"
+    - "How much is it?"
+    - "Can I pay by card?"
+  feedback_focus: [request_forms, articles, politeness]

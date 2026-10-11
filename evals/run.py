@@ -98,6 +98,7 @@ def run_asr_section(manifest: Path, model: str, context_mode: str) -> dict:
     return {
         "model_id": report["model_id"],
         "context_mode": report["context_mode"],
+        "token_cap": report["token_cap"],
         "manifest": report["manifest"],
         "synthetic": report["synthetic"],
         "metrics": report["overall"],

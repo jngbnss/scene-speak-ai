@@ -39,6 +39,7 @@ class OrderState:
     pending: Suggestion | None = None
     user_confirmed: bool = False
     end_reason: str | None = None
+    last_action: str | None = None
 
 
 @dataclass(frozen=True)
@@ -158,6 +159,10 @@ class Director:
         if not s.options_offered and can_customize and untouched:
             s.options_offered = True
             return "offer_options", {}
+        # "Yes, sure." to "Milk or an extra shot?" says yes to something, but not to what.
+        just_yes = "confirm" in ext.intents and not ({"done", "deny"} & ext.intents)
+        if s.last_action == "offer_options" and just_yes and not changed:
+            return "ask_which_option", {}
         return "confirm_order", {}
 
     def _apply(self, updates: dict[str, str | int]) -> bool:
@@ -200,6 +205,7 @@ class Director:
         ):
             raise InvalidTransitionError(f"{self.state.phase} -> {new_phase} via '{action}'")
         self.state.phase = new_phase
+        self.state.last_action = action
         return self._snapshot(action, context, ext)
 
     def _snapshot(

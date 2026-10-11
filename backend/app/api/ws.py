@@ -37,7 +37,8 @@ from app.evaluation.evaluator import Evaluator, SessionSummary, UserLine
 from app.evaluation.schema import Feedback, LineSpeech
 from app.evaluation.speech import analyze_line
 from app.scenes.conversation import ConversationSession, TurnResult
-from app.scenes.loader import SceneNotFoundError, load_scene
+from app.scenes.loader import SceneNotFoundError, load_any
+from app.scenes.talk import TalkScene, TalkSession
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -55,16 +56,27 @@ def is_hallucination(transcript: Transcript) -> bool:
     return text in HALLUCINATIONS and unsure
 
 
-def evaluate_session(services: Services, session: ConversationSession) -> Feedback:
+Session = ConversationSession | TalkSession
+
+
+def session_outcome(session: Session) -> tuple[bool, list[str]]:
+    """(success, what the user still had to do), decided by rules, not by the LLM."""
+    if isinstance(session, TalkSession):
+        return session.success, session.missing_ko
+    state = session.director.state
+    return state.phase == "completed" and state.user_confirmed, session.director.missing_required
+
+
+def evaluate_session(services: Services, session: Session) -> Feedback:
     repo = services.repo
     user_id = repo.session_user(session.id)
     past = [t for t, _ in repo.repeated_error_types(user_id, min_count=1)][:5] if user_id else []
-    turn = session.director
+    success, missing = session_outcome(session)
     summary = SessionSummary(
         transcript=repo.transcript(session.id),
         user_lines=[UserLine(seq, text, words) for seq, text, words in repo.user_lines(session.id)],
-        success=bool(turn.state.phase == "completed" and turn.state.user_confirmed),
-        missing_required=turn.missing_required,
+        success=bool(success),
+        missing_required=missing,
         past_error_types=past,
     )
     evaluator = Evaluator(session.scene, services.llm, services.settings.low_confidence_threshold)
@@ -107,7 +119,7 @@ class _Connection:
     def __init__(self, ws: WebSocket, services: Services) -> None:
         self.ws = ws
         self.services = services
-        self.session: ConversationSession | None = None
+        self.session: Session | None = None
         self.npc_seq = 0
         self.user_seqs: set[int] = set()
 
@@ -166,7 +178,7 @@ class _Connection:
                 phase=turn.phase,
                 slots=turn.slots,
                 missing_required=turn.missing_required,
-                user_turns=session.director.state.user_turns,
+                user_turns=session.user_turns,
             )
         )
         if result.reply is not None:
@@ -200,7 +212,7 @@ class _Connection:
         settings = self.services.settings
         scene_id = msg.scene_id or settings.default_scene_id
         try:
-            scene = load_scene(scene_id)
+            scene = load_any(scene_id)
         except SceneNotFoundError as exc:
             await self.error("scene_not_found", str(exc))
             return
@@ -209,7 +221,13 @@ class _Connection:
         except ValueError as exc:
             await self.error("bad_nickname", str(exc))
             return
-        self.session = ConversationSession(scene, llm=self.services.npc_llm)
+        if isinstance(scene, TalkScene):
+            self.session = TalkSession(scene, llm=self.services.npc_llm)
+            required, optional = [s.id for s in scene.steps], []
+            labels = {s.id: s.description_ko for s in scene.steps}
+        else:
+            self.session = ConversationSession(scene, llm=self.services.npc_llm)
+            required, optional, labels = scene.slots.required, scene.slots.optional, {}
         self.services.repo.create_session(self.session.id, user_id, scene.id)
         self.npc_seq = 0
         self.user_seqs = set()
@@ -223,8 +241,11 @@ class _Connection:
                     place=scene.setting.place,
                     user_role=scene.user_role,
                     goal_ko=scene.goal.description_ko,
-                    required_slots=scene.slots.required,
-                    optional_slots=scene.slots.optional,
+                    required_slots=required,
+                    optional_slots=optional,
+                    kind="talk" if isinstance(scene, TalkScene) else "order",
+                    slot_labels=labels,
+                    npc_role=scene.npc.role,
                 ),
             )
         )

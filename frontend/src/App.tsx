@@ -1,20 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
-import { ConversationView } from "./features/conversation/ConversationView";
-import { useConversation } from "./features/conversation/useConversation";
-import { FeedbackView } from "./features/feedback/FeedbackView";
-import { useMicrophone } from "./features/microphone/useMicrophone";
+import { ConversationScreen } from "./features/conversation/ConversationScreen";
 import { ReviewView } from "./features/feedback/ReviewView";
-import { OrderPanel } from "./features/scenes/OrderPanel";
+import { ReportView } from "./features/report/ReportView";
+import { NPCS, type NpcDef } from "./features/world/map";
+import { WorldView } from "./features/world/WorldView";
+import { login } from "./services/api";
 
 const NICKNAME_KEY = "scenespeak.nickname";
-
-const END_REASONS: Record<string, string> = {
-  completed: "주문을 완료했어요.",
-  user_cancelled: "주문을 취소했어요.",
-  user_ended: "대화를 종료했어요.",
-  max_user_turns: "대화가 너무 길어져 종료됐어요.",
-};
+const clearedKey = (nickname: string) => `scenespeak.cleared.${nickname}`;
 
 function loadNickname(): string {
   try {
@@ -22,6 +16,27 @@ function loadNickname(): string {
   } catch {
     return "";
   }
+}
+
+function loadCleared(nickname: string): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(clearedKey(nickname)) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCleared(nickname: string, cleared: Set<string>): void {
+  try {
+    localStorage.setItem(clearedKey(nickname), JSON.stringify([...cleared]));
+  } catch {
+    // storage blocked: progress lasts for this visit only
+  }
+}
+
+/** /report or #/report opens the evaluation report directly (also on GitHub Pages). */
+function isReportRoute(): boolean {
+  return window.location.hash === "#/report" || window.location.pathname.endsWith("/report");
 }
 
 function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
@@ -39,9 +54,12 @@ function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
   };
   return (
     <div className="gate">
-      <p className="eyebrow">SceneSpeak</p>
-      <h1>뉴욕 카페에서 영어로 주문해 보세요</h1>
-      <p className="muted">닉네임별로 대화 기록과 복습 문장이 저장됩니다.</p>
+      <p className="eyebrow">SceneSpeak · New York</p>
+      <h1>뉴욕 거리를 걸으며 영어로 말해 보세요</h1>
+      <p className="muted">
+        카페, 핫도그 노점, 타임스스퀘어, 호텔, 지하철역에서 사람들이 기다리고 있어요. 닉네임별로 대화 기록과 복습
+        문장이 저장됩니다.
+      </p>
       <form onSubmit={submit} className="composer">
         <label htmlFor="nickname" className="visually-hidden">
           닉네임
@@ -58,38 +76,59 @@ function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
           시작하기
         </button>
       </form>
+      <p className="muted">
+        <a href="#/report">평가 리포트 보기</a>
+      </p>
     </div>
   );
 }
 
-function Scene({ nickname, onLogout }: { nickname: string; onLogout: () => void }) {
-  const { state, status, npcSpeaking, muted, say, sayAudio, fix, end, toggleMute, restart } =
-    useConversation(nickname);
-  const [tab, setTab] = useState<"talk" | "review">("talk");
-  const { scene, result } = state;
-  const ended = result !== null;
-  const mic = useMicrophone({
-    onUtterance: sayAudio,
-    hold: npcSpeaking || state.waitingForNpc || ended,
-  });
+type Tab = "world" | "review" | "report";
+
+function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }) {
+  const [tab, setTab] = useState<Tab>(isReportRoute() ? "report" : "world");
+  const [talkingTo, setTalkingTo] = useState<NpcDef | null>(null);
+  const [cleared, setCleared] = useState<Set<string>>(() => loadCleared(nickname));
+  const [userId, setUserId] = useState<number | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [reviewKey, setReviewKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    login(nickname)
+      .then((r) => !cancelled && setUserId(r.user_id))
+      .catch(() => undefined); // no backend (e.g. GitHub Pages): the street still works
+    return () => {
+      cancelled = true;
+    };
+  }, [nickname]);
+
+  const finished = useCallback(
+    (sceneId: string, success: boolean) => {
+      setReviewKey((k) => k + 1);
+      if (!success) return;
+      setCleared((prev) => {
+        const next = new Set(prev).add(sceneId);
+        saveCleared(nickname, next);
+        return next;
+      });
+    },
+    [nickname],
+  );
+
+  const done = NPCS.filter((n) => cleared.has(n.sceneId)).length;
 
   return (
     <div className="app">
       <header className="top">
         <div>
-          <p className="eyebrow">{scene?.place ?? "SceneSpeak"}</p>
-          <h1>{scene?.title ?? "연결 중…"}</h1>
-          {scene && (
-            <p className="goal">
-              목표: {scene.goal_ko} · 역할: {scene.user_role}
-            </p>
-          )}
+          <p className="eyebrow">SceneSpeak · New York</p>
+          <h1>
+            미션 {done}/{NPCS.length}
+          </h1>
         </div>
         <div className="top-actions">
-          <span className={`status status-${status}`}>
-            {status === "open" ? "연결됨" : status === "connecting" ? "연결 중" : "연결 끊김"}
-          </span>
-          <button className="link" onClick={toggleMute} aria-pressed={muted}>
+          <button className="link" onClick={() => setMuted((m) => !m)} aria-pressed={muted}>
             {muted ? "음성 켜기" : "음성 끄기"}
           </button>
           <span className="muted">{nickname}</span>
@@ -100,76 +139,80 @@ function Scene({ nickname, onLogout }: { nickname: string; onLogout: () => void 
       </header>
 
       <nav className="tabs" aria-label="화면">
-        <button aria-pressed={tab === "talk"} onClick={() => setTab("talk")}>
-          대화
+        <button aria-pressed={tab === "world"} onClick={() => setTab("world")}>
+          거리
         </button>
-        <button
-          aria-pressed={tab === "review"}
-          onClick={() => setTab("review")}
-          disabled={state.userId === null}
-        >
+        <button aria-pressed={tab === "review"} onClick={() => setTab("review")} disabled={userId === null}>
           복습
+        </button>
+        <button aria-pressed={tab === "report"} onClick={() => setTab("report")}>
+          평가 리포트
         </button>
       </nav>
 
-      {tab === "review" && state.userId !== null ? (
-        <ReviewView key={`${state.userId}-${state.feedback}`} userId={state.userId} />
-      ) : (
-        <>
-          {status === "closed" && !scene && (
-            <p className="banner error">
-              서버에 연결할 수 없어요. 백엔드가 실행 중인지 확인해 주세요 (README의 실행 방법 참고).
-            </p>
-          )}
-          {state.error && <p className="banner error">{state.error}</p>}
-          {result && (
-            <div className={`banner ${result.success ? "success" : "neutral"}`}>
-              <span>
-                {result.success ? "✓ 과업 성공 · " : "과업 미완료 · "}
-                {END_REASONS[result.reason ?? ""] ?? result.reason}
-              </span>
-              <button onClick={restart}>다시 하기</button>
-            </div>
-          )}
+      {tab === "review" && userId !== null && <ReviewView key={reviewKey} userId={userId} />}
+      {tab === "report" && <ReportView />}
 
-          <main className="layout">
-            <ConversationView
-              lines={state.lines}
-              disabled={status !== "open" || !scene || ended}
-              waiting={state.waitingForNpc}
-              canFix={!ended}
-              onSay={say}
-              onFix={fix}
-              mic={{ status: mic.status, error: mic.error, start: mic.start, stop: mic.stop }}
-            />
-            <div className="side">
-              {scene && <OrderPanel scene={scene} phase={state.phase} slots={state.slots} />}
-              {state.timing && (
-                <p className="timing" title="말이 끝난 뒤 NPC 음성이 준비되기까지">
-                  응답 {(state.timing.total_ms / 1000).toFixed(1)}초 · 인식{" "}
-                  {(state.timing.stt_ms / 1000).toFixed(1)} · 대사 {(state.timing.npc_ms / 1000).toFixed(1)} ·
-                  음성 {(state.timing.tts_ms / 1000).toFixed(1)}
-                </p>
-              )}
-              {!ended && scene && (
-                <button className="end-btn" onClick={end}>
-                  대화 끝내기
-                </button>
-              )}
-            </div>
-          </main>
-
-          {state.sessionId && state.feedback !== "none" && (
-            <FeedbackView sessionId={state.sessionId} status={state.feedback} />
-          )}
-        </>
-      )}
+      {/* The street stays mounted so the player keeps their spot while talking. */}
+      <div hidden={tab !== "world"}>
+        {talkingTo && (
+          <ConversationScreen
+            key={talkingTo.id}
+            nickname={nickname}
+            sceneId={talkingTo.sceneId}
+            npcName={talkingTo.name}
+            example={talkingTo.exampleEn}
+            muted={muted}
+            onClose={() => setTalkingTo(null)}
+            onUserId={setUserId}
+            onFinished={finished}
+          />
+        )}
+        <div hidden={talkingTo !== null} className="world-layout">
+          <WorldView cleared={cleared} paused={talkingTo !== null || tab !== "world"} onTalk={setTalkingTo} />
+          <aside className="missions" aria-label="미션">
+            <h2>오늘의 미션</h2>
+            <ul>
+              {NPCS.map((n) => (
+                <li key={n.id} className={cleared.has(n.sceneId) ? "cleared" : ""}>
+                  <span className="mission-mark" aria-hidden="true">
+                    {cleared.has(n.sceneId) ? "✓" : "!"}
+                  </span>
+                  <span>
+                    <b>{n.roleKo}</b> {n.name}
+                    <br />
+                    <span className="muted">{n.teaserKo}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function App() {
   const [nickname, setNickname] = useState<string | null>(null);
+  const [reportOnly, setReportOnly] = useState(isReportRoute());
+
+  useEffect(() => {
+    const onHash = () => setReportOnly(isReportRoute());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  if (!nickname && reportOnly) {
+    return (
+      <div className="app">
+        <p>
+          <a href="#/">← SceneSpeak로 돌아가기</a>
+        </p>
+        <ReportView />
+      </div>
+    );
+  }
   if (!nickname) return <NicknameGate onDone={setNickname} />;
-  return <Scene key={nickname} nickname={nickname} onLogout={() => setNickname(null)} />;
+  return <Game key={nickname} nickname={nickname} onLogout={() => setNickname(null)} />;
 }

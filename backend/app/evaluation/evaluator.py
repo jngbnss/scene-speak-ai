@@ -26,6 +26,7 @@ from app.evaluation.schema import (
 )
 from app.scenes.extractor import STOPWORDS
 from app.scenes.models import Scene
+from app.scenes.talk import TalkScene
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +86,14 @@ def _contains(haystack: str, needle: str) -> bool:
 SHORT_ANSWER_MAX_WORDS = 3
 
 
-def scene_vocabulary(scene: Scene) -> set[str]:
+# Words of correct short answers in any scene ("Yes, please.", "No, thanks.").
+SHORT_ANSWER_WORDS = {"yes", "no", "yeah", "sure", "okay", "ok", "please", "thanks", "thank", "you"}
+
+
+def scene_vocabulary(scene: Scene | TalkScene) -> set[str]:
+    if isinstance(scene, TalkScene):
+        words = {w for p in scene.hotwords for w in _norm_words(p)}
+        return words | SHORT_ANSWER_WORDS | (STOPWORDS - {"one", "two", "three"})
     menu = scene.menu
     phrases = [a for d in menu.drinks for a in d.aliases]
     for options in (menu.sizes, menu.temperatures, menu.milks):
@@ -96,9 +104,50 @@ def scene_vocabulary(scene: Scene) -> set[str]:
     return {w for p in phrases for w in _norm_words(p)} | (STOPWORDS - {"one", "two", "three"})
 
 
+@dataclass(frozen=True)
+class PromptWords:
+    """Scene-specific words in the tutor prompt. The café wording is the measured one."""
+
+    npc_label: str
+    conversation: str
+    situation: str
+    goal: str
+    done: str
+    not_done: str
+    how_it_went: str
+
+
+CAFE_WORDS = PromptWords(
+    npc_label="BARISTA",
+    conversation="this café conversation",
+    situation="in a café",
+    goal="to order the same thing",
+    done="the order was completed",
+    not_done="the order was NOT completed (cancelled or ended early)",
+    how_it_went="how the order went",
+)
+
+
+def prompt_words(scene: Scene | TalkScene) -> PromptWords:
+    if not isinstance(scene, TalkScene):
+        return CAFE_WORDS
+    return PromptWords(
+        npc_label=scene.npc.role.upper(),
+        conversation=f"this conversation with a {scene.npc.role} at {scene.setting.place}",
+        situation="in this situation",
+        goal="in the same situation",
+        done="the learner did everything the task asked",
+        not_done="the learner did NOT finish the task (left or ended early)",
+        how_it_went="how the conversation went",
+    )
+
+
 class Evaluator:
-    def __init__(self, scene: Scene, llm: LLMAdapter, low_confidence: float = 0.6) -> None:
+    def __init__(
+        self, scene: Scene | TalkScene, llm: LLMAdapter, low_confidence: float = 0.6
+    ) -> None:
         self.scene = scene
+        self.words = prompt_words(scene)
         self.llm = llm
         self.low_confidence = low_confidence
         self._vocab = scene_vocabulary(scene)
@@ -110,17 +159,16 @@ class Evaluator:
 
     def messages(self, s: SessionSummary) -> list[ChatMessage]:
         lines = "\n".join(
-            f"{'CUSTOMER' if who == 'user' else 'BARISTA'}: {text}" for who, text in s.transcript
+            f"{'CUSTOMER' if who == 'user' else self.words.npc_label}: {text}"
+            for who, text in s.transcript
         )
         focus = ", ".join(self.scene.learning.feedback_focus)
-        outcome = (
-            "the order was completed"
-            if s.success
-            else "the order was NOT completed (cancelled or ended early)"
-        )
+        w = self.words
+        npc = w.npc_label.lower()
+        outcome = w.done if s.success else w.not_done
         past = ", ".join(s.past_error_types) or "none"
         system = f"""You are a friendly English tutor for Korean adults learning travel English.
-Review only the CUSTOMER lines of this café conversation.
+Review only the CUSTOMER lines of {w.conversation}.
 
 Return one entry in "lines" for EVERY customer line, in order, copying it into "line".
 For each line decide two things:
@@ -132,19 +180,19 @@ For each line decide two things:
    If wrong: grammar_ok=false, "corrected" = the fixed line, error_type = one of article,
    plural, verb_form, subject_verb_agreement, word_order, preposition, tense, and a Korean
    explanation_ko. If right: grammar_ok=true and leave those fields empty.
-2. more_natural: only if the line is correct but sounds rude or unnatural in a café
+2. more_natural: only if the line is correct but sounds rude or unnatural {w.situation}
    ("Give me a latte."), give a better line and a Korean reason_ko. Otherwise "".
 
 Short spoken answers are correct and natural: "Hot.", "Medium.", "Large, please.", "Yes.",
 "No, thanks." Mark them grammar_ok=true with more_natural "".
 
 Other fields:
-- recommended_sentences: up to 3 natural sentences the CUSTOMER (not the barista) could
-  say next time to order the same thing.
+- recommended_sentences: up to 3 natural sentences the CUSTOMER (not the {npc}) could
+  say next time {w.goal}.
 - review_items: up to 3 English sentences the customer should practice saying out loud,
   usually the corrected versions of their own lines. Sentences only, never advice.
 - explanation_ko, reason_ko and summary MUST be written in Korean (한국어), one sentence each.
-- summary: say how the order went (outcome below) and the single most useful tip based on
+- summary: say {w.how_it_went} (outcome below) and the single most useful tip based on
   the mistakes you actually found. Do not mention mistakes that are not in your lists.
 
 - If every line is correct and natural, say so in the summary.
