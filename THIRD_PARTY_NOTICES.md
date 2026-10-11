@@ -25,6 +25,7 @@ Full license texts are included with each package (`site-packages/*.dist-info`,
 |---|---|---|
 | React, React DOM, scheduler **(bundled)** | MIT, Copyright (c) Meta Platforms, Inc. and affiliates | https://github.com/facebook/react |
 | @ricky0123/vad-web **(bundled)** | ISC | https://github.com/ricky0123/vad |
+| three.js **(bundled)** | MIT, Copyright © 2010-2024 three.js authors | https://github.com/mrdoob/three.js |
 | onnxruntime-web, onnxruntime-common **(bundled)** | MIT, Copyright (c) Microsoft Corporation | https://github.com/microsoft/onnxruntime |
 | protobufjs **(bundled)** | BSD-3-Clause | https://github.com/protobufjs/protobuf.js |
 | flatbuffers **(bundled)** | Apache-2.0 | https://github.com/google/flatbuffers |

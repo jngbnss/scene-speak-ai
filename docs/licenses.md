@@ -9,7 +9,7 @@
 | 구분 | 결론 |
 |---|---|
 | 저장소에 포함된 서드파티 코드·모델 | **없음.** 모델 파일, 음성, `node_modules`, `.venv`는 모두 Git에서 제외된다. |
-| GitHub Pages 배포물(프론트 빌드) | React(MIT), onnxruntime-web(MIT), vad-web(ISC), Silero VAD 모델(MIT)이 들어간다. 모두 고지만 하면 된다. |
+| GitHub Pages 배포물(프론트 빌드) | React(MIT), three.js(MIT), onnxruntime-web(MIT), vad-web(ISC), Silero VAD 모델(MIT)이 들어간다. 모두 고지만 하면 된다. 3D 거리의 건물·사람·차는 코드로 만들어 외부 모델·텍스처 파일이 없다. |
 | 주의가 필요한 것 | **espeak-ng와 phonemizer(GPL-3.0+)**: Kokoro TTS가 실행 중에 불러온다(D-029). **NVIDIA CUDA/cuDNN 휠**: 독점 라이선스라 재배포 조건이 따로 있다. |
 | 학습 데이터 | 이 프로젝트는 모델을 학습하지 않는다. 평가용 음성은 Kokoro로 직접 합성하고(제3자 녹음 없음), Git에 올리지 않는다. |
 
@@ -65,12 +65,13 @@
 |---|---|---|---|
 | react / react-dom / scheduler | 18.3.1 / 18.3.1 / 0.23.2 | MIT | UI |
 | @ricky0123/vad-web | 0.0.30 | ISC | 브라우저 VAD |
+| three | 0.170.0 | MIT | 3D 거리 (단계 6) |
 | onnxruntime-web / onnxruntime-common | 1.30.0 | MIT | VAD 모델 실행(wasm) |
 | protobufjs, @protobufjs/* | 7.6.6 | BSD-3-Clause | onnxruntime-web 의존성 |
 | flatbuffers, long | 25.9.23, 5.3.2 | Apache-2.0 | onnxruntime-web 의존성 |
 | guid-typescript, platform | 1.0.9, 1.3.6 | ISC, MIT | onnxruntime-web 의존성 |
 
-개발 도구(Vite 5.4.11, TypeScript 5.6.3, Vitest 2.1.8, @vitejs/plugin-react 4.3.4)는 MIT이고 빌드 결과에는 들어가지 않는다.
+개발 도구(Vite 5.4.11, TypeScript 5.6.3, Vitest 2.1.8, @vitejs/plugin-react 4.3.4, @types/three 0.170.0)는 MIT이고 빌드 결과에는 들어가지 않는다.
 
 ## 외부 프로그램
 

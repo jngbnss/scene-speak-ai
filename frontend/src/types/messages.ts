@@ -18,7 +18,7 @@ export interface SceneInfo {
   required_slots: string[];
   optional_slots: string[];
   /** "order": café Director slots; "talk": mission steps labelled in slot_labels. */
-  kind?: "order" | "talk";
+  kind?: "order" | "talk" | "chat";
   slot_labels?: Record<string, string>;
   npc_role?: string;
 }

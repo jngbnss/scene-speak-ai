@@ -52,21 +52,28 @@
 
 복습 따라 말하기(`POST /api/shadowing`)는 정답 문장이 있으므로 빠진 단어와 덧붙인 단어를 표시한다. 인식기가 확신하지 못한 단어는 "빠짐" 대신 "불확실"로 표시한다(`evaluation/shadowing.py`).
 
-## 뉴욕 월드와 미션 대화 (단계 5)
+## 뉴욕 거리와 미션·자유 대화 (단계 5, 6)
 
 ```
-브라우저: WorldView(canvas) ── NPC에게 다가가 Space ──▶ ConversationScreen(sceneId)
+브라우저: CityView(three.js) ── 사람에게 다가가 Space ──▶ ConversationScreen(sceneId)
                                                          │ session_start {scene_id}
 백엔드:   load_any(scene_id) ─┬─ scenes/new-york-cafe.yaml   → ConversationSession (Scene Director)
-                              └─ scenes/talks/{id}.yaml       → TalkSession (단계 체크리스트)
+                              ├─ scenes/talks/{id}.yaml       → TalkSession (단계 체크리스트)
+                              └─ scenes/people/{id}.yaml      → TalkSession, mode=chat (자유 대화)
 ```
 
-- **월드**(`frontend/src/features/world/`)는 브라우저에서만 돈다. `map.ts`가 타일 지도와 NPC 위치·장면 ID를 정의한다. `draw.ts`는 타일과 캐릭터를 코드로 그리고(이미지 파일 없음), `physics.ts`는 충돌과 대화 가능 거리를 계산한다. 정적 지도는 한 번만 그려 두고, 매 프레임 카메라 영역만 확대해 복사한다.
+- **3D 거리**(`frontend/src/features/city/`)는 브라우저에서만 돈다(D-033).
+  - `layout.ts`: three.js 없이 순수 데이터로 도로, 블록, 건물, 소품, 사람(위치나 걷는 길, 외모, 장면 ID), 충돌 사각형을 정의한다. 그래서 `tests/city.test.ts`에서 겹침과 도달 가능성을 검사할 수 있다.
+  - `traffic.ts`: 택시 차선, 신호 주기(28초), 앞차·신호·플레이어 앞 정지. 이것도 순수 함수다.
+  - `models.ts`: 사람(허벅지·정강이·팔 관절로 걷기와 앉기), 택시, 건물(창문 텍스처를 캔버스로 생성), 간판, 소품을 three.js 기본 도형으로 만든다. 외부 모델 파일이 없다.
+  - `city.ts`: 장면을 조립하고 게임 루프를 돈다. 카메라 기준 이동, 미끄러지는 충돌, 걷는 사람의 비켜 가기, 건물에 막히면 당겨지는 3인칭 카메라, 플레이어를 따라가는 그림자.
+  - `CityView.tsx`: 키보드·조이스틱 입력과 안내 UI만 맡는다. three.js는 거리 화면을 열 때 따로 불러온다(별도 청크 약 520 kB). 대화 중에는 렌더링을 멈춘다.
 - **미션 대화**(`backend/app/scenes/talk.py`)는 카페 세션과 같은 인터페이스(`start`, `handle_text`, `end`, `ended`, `user_turns`)를 가진다. 그래서 WebSocket, 피드백, 발화 분석을 그대로 쓴다.
   - 진행 판정: 사용자 발화를 장면 YAML의 단계별 정규식과 대조한다. 모든 단계를 해내면 성공, 작별 인사나 턴 제한이면 미완료다(D-030).
   - NPC 대사 검사(`TalkGuard`): 문장 수, 금지 표현, 장면 사실에 없는 가격, 종료 후 질문. 걸리면 1회 재생성 후 템플릿 대사를 쓴다.
-- 클라이언트에는 `SceneInfo.kind`(`order` | `talk`)와 `slot_labels`가 전달된다. 오른쪽 패널은 카페에서는 주문 상태를, 미션에서는 할 일 체크리스트를 보여준다.
-- 미션 완료 기록은 닉네임별로 브라우저(localStorage)에 남는다. 대화 기록과 피드백은 서버 SQLite에 저장된다.
+- **자유 대화**는 같은 `TalkSession`의 `chat` 모드다(D-032). 목표(인사, 내 소개, 질문, 작별 인사)를 다 해도 대화가 끝나지 않고, 작별 인사나 턴 제한(12)에서 끝난다. 그때 목표를 모두 했으면 성공이다. NPC 프롬프트는 "그 사람에 대한 사실"과 가벼운 수다 지시를 쓰고, 가드는 미션과 같다(문장 수는 3).
+- 클라이언트에는 `SceneInfo.kind`(`order` | `talk` | `chat`)와 `slot_labels`가 전달된다. 오른쪽 패널은 카페에서는 주문 상태를, 미션에서는 할 일을, 자유 대화에서는 대화 목표를 보여준다.
+- 미션 완료와 대화 목표 달성 기록은 닉네임별로 브라우저(localStorage)에 남는다. 대화 기록과 피드백은 서버 SQLite에 저장된다.
 
 ## 백엔드 모듈
 
@@ -86,7 +93,7 @@
 
 | 경로 | 역할 |
 |---|---|
-| `features/world/` | 뉴욕 도트 맵, 캐릭터 그리기, 이동·충돌, NPC 정의 |
+| `features/city/` | 3D 뉴욕 거리: 배치 데이터, 교통, 모델, 게임 루프, 화면 |
 | `features/conversation/` | 대화 상태 리듀서, WebSocket 세션 훅, 대화 화면(전사 고치기 포함), NPC별 대화 화면 |
 | `features/microphone/` | VAD 마이크 훅과 버튼 |
 | `features/scenes/OrderPanel.tsx` | Director가 보낸 주문 상태 표시 (상태를 소유하지 않음) |

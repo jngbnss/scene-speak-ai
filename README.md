@@ -1,6 +1,6 @@
 # SceneSpeak AI
 
-도트로 그린 뉴욕 거리를 돌아다니며 카페 바리스타, 핫도그 노점상, 경찰관, 호텔 직원, 지하철 역무원과 영어로 대화하는 여행 영어회화 서비스입니다. 정해진 문장을 따라 읽지 않고 자유롭게 말하면, 장면 규칙이 대화를 이끌고 대화가 끝나면 피드백과 다시 들어볼 구간을 보여줍니다.
+3D로 만든 뉴욕 거리를 걸어 다니며 카페 바리스타, 핫도그 노점상, 경찰관, 호텔 직원, 지하철 역무원의 미션을 해결하고, 길에서 만난 사람 누구와도 영어로 수다를 떠는 여행 영어회화 서비스입니다. 정해진 문장을 따라 읽지 않고 자유롭게 말하면, 장면 규칙이 대화를 이끌고 대화가 끝나면 피드백과 다시 들어볼 구간을 보여줍니다.
 
 - 설계: [docs/design.md](docs/design.md)
 - 구현 계획과 진행 상황: [docs/implementation-plan.md](docs/implementation-plan.md)
@@ -10,7 +10,8 @@
 
 ## 현재 상태
 
-- **뉴욕 도트 월드 (단계 5):** 방향키·WASD(모바일은 화면의 방향 버튼)로 걷다가 느낌표(!)가 뜬 사람에게 다가가 Space를 누르면 대화가 시작됩니다. 미션 5개를 끝내면 체크 표시가 쌓입니다.
+- **뉴욕 3D 거리 (단계 6):** WASD로 걷고(Shift 달리기), 마우스 드래그로 둘러봅니다. 모바일은 화면의 조이스틱을 씁니다. 택시는 신호등을 지키고 사람이 앞에 있으면 멈춥니다. 느낌표(!)는 미션, 말풍선은 자유 대화 상대입니다. 가까이 가서 Space를 누르면 대화가 시작됩니다.
+- **자유 대화 12명 (단계 6):** 조깅하는 간호사, 거리 화가, 관광객, 은퇴한 택시 기사, 거리 음악가 등과 정해진 목표 없이 이야기합니다. 인사, 내 소개, 질문, 작별 인사를 하면 대화 목표 달성입니다(D-032).
 - **카페 주문:** Scene Director가 주문 상태를 관리하고, Qwen3-8B(Ollama)는 Director가 정한 행동을 대사로만 표현합니다. 출력 가드에 두 번 걸리면 장면 YAML의 템플릿 문장을 씁니다.
 - **거리 미션 4개:** 핫도그 주문, 길 묻기, 호텔 체크인, 지하철 문의입니다. 해야 할 일은 규칙으로 판정하고, NPC는 장면 파일에 적힌 사실만 말합니다(D-030).
 - **음성:** 마이크로 말하면 Whisper가 인식하고, NPC는 Kokoro 음성으로 답합니다. 서버 기준 한 턴에 약 1~2초가 걸립니다.
@@ -104,17 +105,18 @@ cd frontend && npm install && npm run dev
 
 ## 해볼 시나리오 (전체 데모)
 
-백엔드와 프론트를 띄우고 http://localhost:5173 에서 닉네임을 넣으면 타임스스퀘어 위쪽 길가에서 시작합니다.
+백엔드와 프론트를 띄우고 http://localhost:5173 에서 닉네임을 넣으면 타임스스퀘어 북쪽 인도에서 시작합니다. 화면은 남쪽을 보고 있습니다.
 
-1. **경찰관 (바로 아래 타임스스퀘어 광장):** `Excuse me, how do I get to Central Park?` → `How long does it take to walk?` → `Thank you.` → 미션 성공. 오른쪽 할 일 4개가 모두 체크됩니다.
-2. **바리스타 (오른쪽 CAFÉ 앞)**
+1. **자유 대화 (광장 왼쪽의 관광객 Dave, 말풍선):** `Hi, how are you?` → `I'm Jun. I'm from Korea.` → `What do you want to see in New York?` → `It was nice talking to you. Bye!` → 대화 목표 달성. 위쪽 "대화" 수가 1 올라갑니다.
+1. **경찰관 (바로 앞 광장):** `Excuse me, how do I get to Central Park?` → `How long does it take to walk?` → `Thank you.` → 미션 성공. 오른쪽 할 일 4개가 모두 체크됩니다.
+2. **바리스타 (동쪽 블록의 CAFE 앞, 줄무늬 차양)**
    - `I want hot latte.` → `Large, please.`
    - `Yeah, sure.` → NPC가 무엇을 원하는지 되묻습니다.
    - `Oat milk, please.` → `That's all.` → 주문 성공
    - 피드백에서 `I want hot latte` → `a hot latte` 지적을 확인합니다.
-3. **핫도그 노점 (카페 아래, 길 건너):** `Can I get a hot dog?` → `Mustard, please.` → `How much is it?` → `Thanks!`
-4. **호텔 (왼쪽 HOTEL 앞):** `Hi, I have a reservation.` → `My name is Mina Kim.` → `What time is breakfast?` → `Thank you.`
-5. **지하철 역무원 (GRAND CENTRAL 앞 SUBWAY 입구):** `Which train goes to Brooklyn Bridge?` → `How much is the fare?` → `Can I pay with my card?` → `Thanks!`
+3. **핫도그 노점 (카페 오른쪽 빨간 파라솔):** `Can I get a hot dog?` → `Mustard, please.` → `How much is it?` → `Thanks!`
+4. **호텔 (서쪽 HOTEL 입구):** `Hi, I have a reservation.` → `My name is Mina Kim.` → `What time is breakfast?` → `Thank you.`
+5. **지하철 역무원 (광장 남쪽 SUBWAY 입구, 초록 등):** `Which train goes to Brooklyn Bridge?` → `How much is the fare?` → `Can I pay with my card?` → `Thanks!`
 6. 마이크로 말한 대화라면 피드백 아래 **다시 들어볼 구간**에서 ▶ 버튼으로 내 목소리를 다시 들어 보세요. 일부러 1초 넘게 쉬어 보면 `‖ 1.2초` 표시가 나옵니다.
 7. **복습** 탭에서 복습 문장의 **따라 말하기**를 누르고, 소리 내어 읽거나 입력해 보세요. 빠진 단어와 덧붙인 단어를 보여줍니다.
 8. **평가 리포트** 탭에서 두 측정 결과를 골라 지표 변화를 봅니다. `#/report` 주소로 바로 열 수도 있습니다.
@@ -171,6 +173,7 @@ cd backend
 |---|---|---|
 | `scenes/*.yaml` | 카페처럼 주문 슬롯을 채우는 장면 | 메뉴, 별칭, 의도 표현, 단계, 행동별 지시·템플릿, 가드 규칙 |
 | `scenes/talks/*.yaml` | 할 일 체크리스트형 미션 대화 | 단계별 판정 정규식, NPC가 말해도 되는 사실, 템플릿 대사 |
+| `scenes/people/*.yaml` | 거리 사람과의 자유 대화 (`mode: chat`) | 성격, 그 사람에 대한 사실, 대화 목표(인사·소개·질문·작별) 정규식 |
 
 수정한 뒤에는 `python -m app.scenes.validate`로 검사하세요.
 - 카페 장면 검사: JSON Schema, 별칭 중복, 단계 참조, 템플릿 placeholder, 모든 템플릿 문장의 출력 가드 통과
@@ -178,9 +181,9 @@ cd backend
 
 이어서 할 일:
 - **Director 동작을 바꿨다면:** `evals/dialogue-cases.jsonl`에 케이스를 추가하세요.
-- **새 미션을 월드에 세우려면:**
-  1. `frontend/src/features/world/map.ts`의 `NPCS`에 위치와 `sceneId`를 추가합니다.
-  2. `backend/tests/test_talk.py`의 `WALKTHROUGHS`에 모범 대화를 넣습니다.
+- **새 사람이나 미션을 거리에 세우려면:**
+  1. `frontend/src/features/city/layout.ts`의 `PEOPLE`에 서 있는 곳(`spot`)이나 걷는 길(`route`), 외모, `sceneId`를 추가합니다. `tests/city.test.ts`가 건물·도로와 겹치지 않는지, 걸어서 닿는지, 장면 파일이 있는지 검사합니다.
+  2. 미션이면 `backend/tests/test_talk.py`의 `WALKTHROUGHS`에 모범 대화를 넣습니다. 자유 대화는 `tests/test_people.py`가 모든 사람에게 같은 대화를 시험합니다.
 
 ## 데이터와 개인정보
 
@@ -188,4 +191,4 @@ cd backend
 
 사용자 녹음은 "다시 들어볼 구간" 재생에만 쓰고, 기본 7일 뒤 서버를 시작할 때 삭제합니다(`AUDIO_RETENTION_DAYS`).
 
-Talklish 등 기존 서비스의 이름, 대사, 캐릭터, 이미지는 사용하지 않습니다. 모든 장면 대사는 직접 작성했고, 맵과 캐릭터는 코드로 직접 그렸습니다.
+Talklish 등 기존 서비스의 이름, 대사, 캐릭터, 이미지는 사용하지 않습니다. 모든 장면 대사는 직접 작성했고, 거리·건물·사람·차는 three.js 기본 도형으로 코드에서 직접 만들었습니다(외부 3D 모델 파일 없음).

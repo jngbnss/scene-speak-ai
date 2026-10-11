@@ -13,6 +13,13 @@ const END_REASONS: Record<string, string> = {
   max_user_turns: "대화가 너무 길어져 종료됐어요.",
 };
 
+function resultText(kind: string | undefined, success: boolean, reason: string | null | undefined): string {
+  if (kind === "chat") {
+    return success ? "✓ 대화 목표 달성 · 작별 인사까지 잘 마쳤어요." : "대화 종료 · 다음엔 대화 목표를 모두 해 보세요.";
+  }
+  return (success ? "✓ 미션 성공 · " : "미션 미완료 · ") + (END_REASONS[reason ?? ""] ?? reason ?? "");
+}
+
 interface Props {
   nickname: string;
   sceneId: string;
@@ -83,10 +90,7 @@ export function ConversationScreen({ nickname, sceneId, npcName, example, muted,
       {state.error && <p className="banner error">{state.error}</p>}
       {result && (
         <div className={`banner ${result.success ? "success" : "neutral"}`}>
-          <span>
-            {result.success ? "✓ 미션 성공 · " : "미션 미완료 · "}
-            {END_REASONS[result.reason ?? ""] ?? result.reason}
-          </span>
+          <span>{resultText(scene?.kind, result.success, result.reason)}</span>
           <span className="banner-actions">
             <button onClick={restart}>다시 하기</button>
             <button onClick={onClose}>거리로</button>

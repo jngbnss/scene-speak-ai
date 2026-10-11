@@ -39,6 +39,8 @@ function serveVadAssets(): Plugin {
 
 export default defineConfig({
   plugins: [serveVadAssets(), react()],
+  // three.js alone is about 500 kB; it sits in its own chunk, loaded when the street opens.
+  build: { chunkSizeWarningLimit: 700 },
   server: {
     port: Number(process.env.FRONTEND_PORT ?? 5173),
     strictPort: true,

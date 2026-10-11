@@ -5,6 +5,11 @@ learner just has to get a few things done ("ask the way", "say thanks"). A talk 
 those steps with regular expressions, so progress and success are decided by rules, never
 by the LLM (D-030). The LLM only voices the NPC, limited to the facts in the scene file,
 and every line passes a guard with one retry and a template fallback, like the café NPC.
+
+A free chat with a passer-by (scenes/people/*.yaml, D-032) is the same kind of scene in
+"chat" mode: the steps are conversation goals (greet, introduce yourself, ask a question,
+say goodbye), the talk does not end when they are all done, and it ends when the learner
+says goodbye. The goals are met if they did every step by then.
 """
 
 import logging
@@ -42,6 +47,8 @@ class TalkScene(_Strict):
     version: int
     locale: str
     kind: Literal["talk"]
+    # "mission": ends as soon as every step is done. "chat": free talk, ends on goodbye.
+    mode: Literal["mission", "chat"] = "mission"
     title: str
     setting: Setting
     npc: Npc
@@ -156,7 +163,9 @@ class TalkSession:
         ]
         self.done.update(newly)
 
-        if not self.missing_required:
+        if self.scene.mode == "chat":
+            action = self._chat_action(text)
+        elif not self.missing_required:
             self.phase, self.end_reason = "completed", "completed"
             action = "close"
         elif _matches(self.scene.goodbye_patterns, text):
@@ -168,6 +177,19 @@ class TalkSession:
         else:
             action = "respond"
         return self._record(TurnResult(self._turn(action), self._reply(action)))
+
+    def _chat_action(self, text: str) -> str:
+        if _matches(self.scene.goodbye_patterns, text):
+            self.end_reason = "user_ended"
+        elif self.user_turns >= self.scene.max_user_turns:
+            self.end_reason = "max_user_turns"
+        else:
+            return "respond"
+        if self.missing_required:
+            self.phase = "cancelled"
+            return "end_unfinished"
+        self.phase = "completed"
+        return "close"
 
     def end(self) -> TurnResult:
         if self.ended:
@@ -192,6 +214,8 @@ class TalkSession:
         return step.fallback if step else self.scene.closing
 
     def _instruction(self, action: str) -> str:
+        if action == "close" and self.scene.mode == "chat":
+            return "The visitor is saying goodbye. Say a short, warm goodbye. No questions."
         if action == "close":
             return (
                 "The visitor has done everything they came for. Reply briefly to their last "
@@ -201,7 +225,22 @@ class TalkSession:
             return "The visitor is leaving. Say a short, friendly goodbye. Do not ask a question."
         step = self._next_step()
         hint = f" Then, if it fits naturally, {step.npc_hint}" if step else ""
+        if self.scene.mode == "chat":
+            return (
+                "This is friendly small talk. Reply to their last line in character, and "
+                f"sometimes ask them a simple question back.{hint}"
+            )
         return f"Reply to the visitor's last line using only the facts above.{hint}"
+
+    def _facts_heading(self) -> str:
+        if self.scene.mode == "chat":
+            return (
+                "Facts about you (stay consistent with them; you may add small everyday "
+                "details, but never prices or addresses):"
+            )
+        return (
+            "Facts you may use (never invent prices, places, times or names that are not listed):"
+        )
 
     def messages(self, action: str, retry_note: str = "") -> list[ChatMessage]:
         s, npc = self.scene, self.scene.npc
@@ -210,7 +249,7 @@ class TalkSession:
 {s.setting.description_for_llm.strip()}
 The other person is a {s.user_role} who is practicing English.
 
-Facts you may use (never invent prices, places, times or names that are not listed):
+{self._facts_heading()}
 {facts}
 
 Rules:

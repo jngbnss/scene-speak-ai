@@ -175,10 +175,6 @@ mark.uncertain { background: none; color: inherit; text-decoration: underline wa
 kbd { font-family: ui-monospace, Consolas, monospace; font-size: 11px; padding: 1px 5px; border-radius: 4px; border: 1px solid currentColor; opacity: 0.8; }
 .world-toast { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.92); color: #14181e; font-size: 14px; }
 .world-help { margin: 0; }
-.dpad { display: none; grid-template-areas: ". up ." "left . right" ". down ."; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 48px); gap: 4px; justify-content: center; user-select: none; -webkit-user-select: none; }
-.dpad button { font-size: 18px; padding: 0; touch-action: none; }
-.dpad-up { grid-area: up; } .dpad-down { grid-area: down; } .dpad-left { grid-area: left; } .dpad-right { grid-area: right; }
-@media (pointer: coarse), (max-width: 760px) { .dpad { display: grid; } .world-canvas { height: min(52vh, 440px); } }
 .missions { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .missions h2 { margin: 0 0 8px; font-size: 15px; }
 .missions ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -216,3 +212,16 @@ kbd { font-family: ui-monospace, Consolas, monospace; font-size: 11px; padding: 
 .legend::before { content: ""; width: 10px; height: 6px; border-radius: 3px; display: inline-block; }
 .legend-old::before { background: var(--muted); opacity: 0.55; }
 .legend-new::before { background: var(--accent); }
+.city-canvas { image-rendering: auto; cursor: grab; }
+.city-canvas:active { cursor: grabbing; }
+.city-label { position: absolute; left: 0; top: 0; pointer-events: none; padding: 3px 9px; border-radius: 8px; background: rgba(14, 17, 21, 0.82); color: #fff; font-size: 13px; white-space: nowrap; }
+.city-loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; color: #fff; font-size: 15px; }
+.city-error { position: absolute; left: 12px; right: 12px; top: 12px; }
+.stick { display: none; position: absolute; left: 16px; bottom: 76px; width: 96px; height: 96px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); border: 2px solid rgba(255, 255, 255, 0.5); touch-action: none; place-items: center; }
+.stick-knob { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.85); pointer-events: none; }
+@media (pointer: coarse), (max-width: 760px) { .stick { display: grid; } .world-canvas { height: min(60vh, 480px); } }
+.missions h2 + p.small { margin: -4px 0 8px; }
+.missions ul + h2 { margin-top: 16px; }
+.small { font-size: 12px; }
+.missions ul.locals { gap: 6px; }
+.missions li .chat-mark { background: var(--tile); color: var(--ink); }

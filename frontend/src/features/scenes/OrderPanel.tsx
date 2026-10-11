@@ -29,17 +29,18 @@ function display(value: SlotValue): string {
   return String(value).replace(/_/g, " ");
 }
 
-/** Order state for the café; a to-do checklist for mission talks. */
+/** Order state for the café; a checklist for mission talks and free-chat goals. */
 export function OrderPanel({ scene, phase, slots }: Props) {
-  const talk = scene.kind === "talk";
+  const talk = scene.kind === "talk" || scene.kind === "chat";
+  const title = scene.kind === "chat" ? "대화 목표" : talk ? "할 일" : "주문 상태";
   const rows = [
     ...scene.required_slots.map((s) => ({ slot: s, required: true })),
     ...scene.optional_slots.map((s) => ({ slot: s, required: false })),
   ];
   return (
-    <aside className="order-panel" aria-label={talk ? "할 일" : "주문 상태"}>
+    <aside className="order-panel" aria-label={title}>
       <div className="panel-head">
-        <h2>{talk ? "할 일" : "주문 상태"}</h2>
+        <h2>{title}</h2>
         <span className={`phase phase-${phase}`}>{PHASE_LABELS[phase] ?? phase}</span>
       </div>
       <dl className="slots">

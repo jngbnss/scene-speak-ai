@@ -188,13 +188,14 @@ def main(argv: list[str]) -> int:
     paths = [Path(p) for p in argv] or [
         *sorted(scenes_dir.glob("*.yaml")),
         *sorted((scenes_dir / "talks").glob("*.yaml")),
+        *sorted((scenes_dir / "people").glob("*.yaml")),
     ]
     if not paths:
         print("no scene files found")
         return 1
     failed = 0
     for path in paths:
-        is_talk = path.parent.name == "talks"
+        is_talk = path.parent.name in ("talks", "people")
         errors = validate_talk_file(path) if is_talk else validate_file(path, schema)
         if errors:
             failed += 1

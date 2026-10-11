@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { ConversationScreen } from "./features/conversation/ConversationScreen";
 import { ReviewView } from "./features/feedback/ReviewView";
 import { ReportView } from "./features/report/ReportView";
-import { NPCS, type NpcDef } from "./features/world/map";
-import { WorldView } from "./features/world/WorldView";
+import { CityView } from "./features/city/CityView";
+import { PEOPLE, type Person } from "./features/city/layout";
 import { login } from "./services/api";
 
 const NICKNAME_KEY = "scenespeak.nickname";
@@ -57,8 +57,8 @@ function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
       <p className="eyebrow">SceneSpeak · New York</p>
       <h1>뉴욕 거리를 걸으며 영어로 말해 보세요</h1>
       <p className="muted">
-        카페, 핫도그 노점, 타임스스퀘어, 호텔, 지하철역에서 사람들이 기다리고 있어요. 닉네임별로 대화 기록과 복습
-        문장이 저장됩니다.
+        3D 뉴욕 거리를 걸어 다니며 카페, 핫도그 노점, 타임스스퀘어, 호텔, 지하철역의 미션을 해결하고, 길에서 만난
+        사람들과 자유롭게 수다를 떨어 보세요. 닉네임별로 대화 기록과 복습 문장이 저장됩니다.
       </p>
       <form onSubmit={submit} className="composer">
         <label htmlFor="nickname" className="visually-hidden">
@@ -85,9 +85,12 @@ function NicknameGate({ onDone }: { onDone: (name: string) => void }) {
 
 type Tab = "world" | "review" | "report";
 
+const MISSIONS = PEOPLE.filter((p) => p.kind === "mission");
+const LOCALS = PEOPLE.filter((p) => p.kind === "chat");
+
 function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>(isReportRoute() ? "report" : "world");
-  const [talkingTo, setTalkingTo] = useState<NpcDef | null>(null);
+  const [talkingTo, setTalkingTo] = useState<Person | null>(null);
   const [cleared, setCleared] = useState<Set<string>>(() => loadCleared(nickname));
   const [userId, setUserId] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
@@ -116,7 +119,8 @@ function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }
     [nickname],
   );
 
-  const done = NPCS.filter((n) => cleared.has(n.sceneId)).length;
+  const done = MISSIONS.filter((n) => cleared.has(n.sceneId)).length;
+  const friends = LOCALS.filter((n) => cleared.has(n.sceneId)).length;
 
   return (
     <div className="app">
@@ -124,7 +128,7 @@ function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }
         <div>
           <p className="eyebrow">SceneSpeak · New York</p>
           <h1>
-            미션 {done}/{NPCS.length}
+            미션 {done}/{MISSIONS.length} · 대화 {friends}/{LOCALS.length}
           </h1>
         </div>
         <div className="top-actions">
@@ -169,11 +173,11 @@ function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }
           />
         )}
         <div hidden={talkingTo !== null} className="world-layout">
-          <WorldView cleared={cleared} paused={talkingTo !== null || tab !== "world"} onTalk={setTalkingTo} />
-          <aside className="missions" aria-label="미션">
+          <CityView cleared={cleared} paused={talkingTo !== null || tab !== "world"} onTalk={setTalkingTo} />
+          <aside className="missions" aria-label="미션과 거리 사람들">
             <h2>오늘의 미션</h2>
             <ul>
-              {NPCS.map((n) => (
+              {MISSIONS.map((n) => (
                 <li key={n.id} className={cleared.has(n.sceneId) ? "cleared" : ""}>
                   <span className="mission-mark" aria-hidden="true">
                     {cleared.has(n.sceneId) ? "✓" : "!"}
@@ -182,6 +186,20 @@ function Game({ nickname, onLogout }: { nickname: string; onLogout: () => void }
                     <b>{n.roleKo}</b> {n.name}
                     <br />
                     <span className="muted">{n.teaserKo}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <h2>거리 사람들</h2>
+            <p className="muted small">인사, 내 소개, 질문, 작별 인사까지 하면 ✓가 붙어요.</p>
+            <ul className="locals">
+              {LOCALS.map((n) => (
+                <li key={n.id} className={cleared.has(n.sceneId) ? "cleared" : ""}>
+                  <span className="mission-mark chat-mark" aria-hidden="true">
+                    {cleared.has(n.sceneId) ? "✓" : "…"}
+                  </span>
+                  <span>
+                    <b>{n.name}</b> <span className="muted">{n.roleKo}</span>
                   </span>
                 </li>
               ))}

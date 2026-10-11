@@ -38,6 +38,7 @@ from app.evaluation.schema import Feedback, LineSpeech
 from app.evaluation.speech import analyze_line
 from app.scenes.conversation import ConversationSession, TurnResult
 from app.scenes.loader import SceneNotFoundError, load_any
+from app.scenes.models import Scene
 from app.scenes.talk import TalkScene, TalkSession
 
 log = logging.getLogger(__name__)
@@ -57,6 +58,12 @@ def is_hallucination(transcript: Transcript) -> bool:
 
 
 Session = ConversationSession | TalkSession
+
+
+def scene_kind(scene: Scene | TalkScene) -> str:
+    if isinstance(scene, TalkScene):
+        return "chat" if scene.mode == "chat" else "talk"
+    return "order"
 
 
 def session_outcome(session: Session) -> tuple[bool, list[str]]:
@@ -243,7 +250,7 @@ class _Connection:
                     goal_ko=scene.goal.description_ko,
                     required_slots=required,
                     optional_slots=optional,
-                    kind="talk" if isinstance(scene, TalkScene) else "order",
+                    kind=scene_kind(scene),
                     slot_labels=labels,
                     npc_role=scene.npc.role,
                 ),

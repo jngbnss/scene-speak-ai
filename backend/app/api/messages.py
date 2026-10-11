@@ -56,8 +56,9 @@ class SceneInfo(BaseModel):
     goal_ko: str
     required_slots: list[str]
     optional_slots: list[str]
-    # "order": café Director slots. "talk": mission steps, labelled in slot_labels.
-    kind: Literal["order", "talk"] = "order"
+    # "order": café Director slots. "talk": mission steps, "chat": free-talk goals,
+    # both labelled in slot_labels.
+    kind: Literal["order", "talk", "chat"] = "order"
     slot_labels: dict[str, str] = {}
     npc_role: str = ""
 
